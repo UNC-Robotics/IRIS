@@ -1,0 +1,3 @@
+[submodule "external/nigh"]
+	path = external/nigh
+	url = https://github.com/UNC-Robotics/nigh.git

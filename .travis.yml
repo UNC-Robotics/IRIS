@@ -1,0 +1,77 @@
+language: cpp
+
+git:
+  submodules: false
+
+matrix:
+  include:
+  - os: linux
+    dist: bionic
+    compiler: gcc
+    addons:
+      apt:
+        packages:
+        - libboost-filesystem-dev
+        - libboost-program-options-dev
+        - libboost-serialization-dev
+        - libboost-system-dev
+        - libboost-test-dev
+        - libeigen3-dev
+        - libflann-dev
+        - libode-dev
+        - ninja-build
+        #- libompl-dev
+  - os: linux
+    dist: xenial
+    compiler: gcc
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-7
+        - libboost-filesystem-dev
+        - libboost-program-options-dev
+        - libboost-serialization-dev
+        - libboost-system-dev
+        - libboost-test-dev
+        - libeigen3-dev
+        - libflann-dev
+        - libode-dev
+        - ninja-build
+        #- libompl-dev
+        env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+  - os: osx
+    osx_image: xcode10.3
+    compiler: clang
+    addons:
+      homebrew:
+        packages:
+        - eigen
+        - flann
+        - ninja
+        - ompl
+        update: true
+
+before_install:
+  - git submodule update --init --recursive
+  - eval "${MATRIX_EVAL}"
+script:
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
+      git clone --branch=1.4.2 https://github.com/ompl/ompl.git ./external/ompl &&
+      cd external/ompl &&
+      mkdir -p build &&
+      mkdir -p install &&
+      cd build &&
+      cmake -DCMAKE_INSTALL_PREFIX=../install .. &&
+      make &&
+      make install &&
+      cd ../../.. &&
+      mkdir -p build &&
+      cd build &&
+      CC=gcc-7 CXX=g++-7 cmake -DOMPL_INCLUDE_DIRS=./external/ompl/install/include -DOMPL_LIBRARIES=/home/travis/build/mengyu-fu/iris/external/ompl/install/lib/libompl.so ..&&
+      make;
+    else
+      mkdir -p build && cd build && cmake .. && make;
+    fi

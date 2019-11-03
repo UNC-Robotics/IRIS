@@ -1,0 +1,1 @@
+add_library(crisp_kinematics CosseratRod.cpp)
