@@ -17,7 +17,7 @@ This is code for paper [Toward Asymptotically-Optimal Inspection Planning via Ef
 1. First clone code to your local repository:
 
 	```
-	git clone git@github.com:mengyu-fu/iris.git [path to your local repository]
+	git clone git@github.com:UNC-Robotics/IRIS.git [{path to your local repository}]
 	git submodule update --init --recursive
 	```
 
