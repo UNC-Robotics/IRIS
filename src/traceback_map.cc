@@ -361,7 +361,7 @@ RealNum TracebackMap::ComputeHeuristic(const Idx source, const VisibilitySet& cu
 
 		coverage.Insert(graph->Vertex(u)->vis);
 
-		if (coverage.Size() >= HEUR_PORTION * max_size) {
+		if (coverage.Size() >= max_size) {
 			return dist[u];
 		}
 

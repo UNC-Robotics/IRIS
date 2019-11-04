@@ -18,7 +18,7 @@
 
 #define USE_GHOST_DATA 1
 
-#define USE_HEURISTIC 1
+#define USE_HEURISTIC 0
 
 #if USE_CRISP
 #define MAX_COVERAGE_SIZE 49506
