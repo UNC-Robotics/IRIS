@@ -58,7 +58,7 @@ public:
 	void UnlockMap() { map_locked_ = false; }
 
 #if USE_HEURISTIC
-	RealNum ComputeHeuristic(const Idx source, const Inspection::GPtr graph, const VisibilitySet& graph_coverage);
+	RealNum ComputeHeuristic(const Idx source, const VisibilitySet& current_vis_set, const Inspection::GPtr graph, const VisibilitySet& graph_coverage);
 #endif
 
 private:

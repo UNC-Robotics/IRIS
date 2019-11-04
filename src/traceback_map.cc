@@ -340,11 +340,46 @@ bool TracebackMap::Connected(const Inspection::GPtr& graph) const {
 }
 
 #if USE_HEURISTIC
-	RealNum TracebackMap::ComputeHeuristic(const Idx source, const Inspection::GPtr graph, const VisibilitySet& graph_coverage) {
+RealNum TracebackMap::ComputeHeuristic(const Idx source, const VisibilitySet& current_vis_set, const Inspection::GPtr graph, const VisibilitySet& graph_coverage) {
+	std::vector<Idx> last_step(n_, n_);
+	std::vector<RealNum> dist(n_, R_INF);
+	DijkstraQueue queue;
+	dist[source] = 0;
+	last_step[source] = source;
+	queue.push({source, 0});
+	VisibilitySet coverage = current_vis_set;
+	auto max_size = HEUR_PORTION * (graph_coverage.Size() - current_vis_set.Size()) + current_vis_set.Size();
 
+	while (!queue.empty()) {
+		auto s = queue.top();
+		queue.pop();
+		Idx u = s.first;
 
-		return 0;
+		if (s.second > dist[u]) {
+			continue;
+		}
+
+		coverage.Insert(graph->Vertex(u)->vis);
+
+		if (coverage.Size() >= HEUR_PORTION * max_size) {
+			return dist[u];
+		}
+
+		auto neig = NeighborList(u);
+		for (const auto &v : neig) {
+			auto edge_cost = EdgeCost(u, v);
+			assert(edge_cost > 0);
+			if (dist[v] > dist[u] + edge_cost) {
+				dist[v] = dist[u] + edge_cost;
+				last_step[v] = u;
+				queue.push({v, dist[v]});
+			}
+		}
 	}
+
+	std::cerr << "Heuristic computation failed!" << std::endl;
+	return 0;
+}
 #endif
 
 void TracebackMap::CheckLowerBound(const Idx source, const String message) const {

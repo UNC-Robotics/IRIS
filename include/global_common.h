@@ -18,7 +18,7 @@
 
 #define USE_GHOST_DATA 1
 
-#define USE_HEURISTIC 0
+#define USE_HEURISTIC 1
 
 #if USE_CRISP
 #define MAX_COVERAGE_SIZE 49506
@@ -39,7 +39,7 @@
 
 #if USE_HEURISTIC
 #define HEUR_BIAS 3.5
-#define HEUR_PORTION 0.1;
+#define HEUR_PORTION 0.1
 #endif // USE_HEURISTIC
 
 // basic alias

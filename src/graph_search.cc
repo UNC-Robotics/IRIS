@@ -375,7 +375,7 @@ void GraphSearch::ComputeAndAddSuccessors(const NodePtr parent) {
         if (parent->SuccessorStatusID() != id) { break; }
 
 #if USE_HEURISTIC
-        new_node->SetHeuristic(map_->ComputeHeuristic(m, graph_, virtual_graph_coverage_));
+        new_node->SetHeuristic(map_->ComputeHeuristic(m, new_node->VisSet(), graph_, virtual_graph_coverage_));
 #endif
         open_sets_[new_node->Index()].insert(new_node);
         queue_->push(new_node);
@@ -413,7 +413,7 @@ void GraphSearch::ComputeAndAddSuccessorsCompleteLazy(const NodePtr parent) {
         if (DominatedByOpenStateCompleteLazy(new_node)) { continue; }
 
 #if USE_HEURISTIC
-        new_node->SetHeuristic(map_->ComputeHeuristic(m, graph_, virtual_graph_coverage_));
+        new_node->SetHeuristic(map_->ComputeHeuristic(m, new_node->VisSet(), graph_, virtual_graph_coverage_));
 #endif
         open_sets_[new_node->Index()].insert(new_node);
         queue_->push(new_node);
