@@ -44,20 +44,20 @@ namespace geo {
             length = l;
         }
 
-    	Vec2 UpperLeft() const {
-            return center + 0.5*Vec2(-length, -width);
+    	Vec2 LowerLeft() const {
+            return center + 0.5*Vec2(-width, -length);
         }
 
-        Vec2 UpperRight() const {
-            return center + 0.5*Vec2(-length, width);
-        }
-
-        Vec2 LowerLeft() const {
-            return center + 0.5*Vec2(length, -width);
+        Vec2 UpperLeft() const {
+            return center + 0.5*Vec2(-width, length);
         }
 
         Vec2 LowerRight() const {
-            return center + 0.5*Vec2(length, width);
+            return center + 0.5*Vec2(width, -length);
+        }
+
+        Vec2 UpperRight() const {
+            return center + 0.5*Vec2(width, length);
         }
     };
 }

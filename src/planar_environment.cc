@@ -245,7 +245,7 @@ bool PlanarEnvironment::Intersecting(const Line& l1, const Line& l2) const {
     }
 
     RealNum r = q/d;
-    RealNum s = ((l1.p1[1] - l2.p1[1])*(l1.p2[0] - l1.p1[0]) - (l1.p1[1] - l2.p1[0])*(l1.p2[1] - l1.p1[1]))/d;
+    RealNum s = ((l1.p1[1] - l2.p1[1])*(l1.p2[0] - l1.p1[0]) - (l1.p1[0] - l2.p1[0])*(l1.p2[1] - l1.p1[1]))/d;
 
     if ( r < 0 || r > 1 || s < 0 || s > 1 ) {
         return false;

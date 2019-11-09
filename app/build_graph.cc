@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     // Robot design.
     Vec2 origin(1, 0);
     unsigned num_links = 5;
-    std::vector<RealNum> link_length{0.2, 0.1, 0.2, 1.3, 0.1};
+    std::vector<RealNum> link_length{0.2, 0.1, 0.2, 0.3, 0.1};
     std::vector<Vec2> bounds(num_links, Vec2(-M_PI, M_PI));
     RealNum fov = M_PI/2;
 
