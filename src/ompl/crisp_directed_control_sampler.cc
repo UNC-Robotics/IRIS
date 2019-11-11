@@ -135,7 +135,7 @@ unsigned CrispDirectedControlSampler::SampleToConsideringDistance(const ob::Stat
 
         one_good = true;
         vec = config->KinematicState();
-        prev_config = config;
+        prev_config->DeepCopy(config);
 
         if (last_iter) {
             dest->as<CrispStateSpace::StateType>()->SetState(prev_config);
