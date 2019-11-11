@@ -43,7 +43,7 @@ SizeType GraphSearch::ExpandVirtualGraph(SizeType new_size, bool lazy_computatio
 	return virtual_graph_size_;
 }
 
-std::list<Idx> GraphSearch::SearchVirtualGraphCompleteLazy(const RealNum p, const RealNum eps) {
+std::vector<Idx> GraphSearch::SearchVirtualGraphCompleteLazy(const RealNum p, const RealNum eps) {
     const TimePoint start = Clock::now();
 
 #if USE_GHOST_DATA
@@ -152,19 +152,25 @@ std::list<Idx> GraphSearch::SearchVirtualGraphCompleteLazy(const RealNum p, cons
     // retrieve full path
     std::vector<Idx> path;
     NodePtr tag = result_node;
-    while (tag != nullptr) {
-        path.push_back(tag->Index());
+    path.push_back(tag->Index());
+    while (tag) {
+        auto super_edge = tag->LocalPath();
+
+        for (auto i = 1; i < super_edge.size(); ++i) {
+            path.push_back(super_edge[i]);
+        }
+        
         tag = tag->Parent();
     }
 
-    std::list<Idx> result_path = map_->FullPath(path);
+    std::reverse(path.begin(), path.end());
 
     time_search_ += RelativeTime(start);
-    return result_path;
+    return path;
 
 }
 
-std::list<Idx> GraphSearch::SearchVirtualGraph(const RealNum p, const RealNum eps) {
+std::vector<Idx> GraphSearch::SearchVirtualGraph(const RealNum p, const RealNum eps) {
 	const TimePoint start = Clock::now();
 
 #if USE_GHOST_DATA
@@ -252,16 +258,22 @@ std::list<Idx> GraphSearch::SearchVirtualGraph(const RealNum p, const RealNum ep
 	
 	// retrieve full path
 	std::vector<Idx> path;
-	NodePtr tag = result_node;
-	while (tag != nullptr) {
-		path.push_back(tag->Index());
-		tag = tag->Parent();
-	}
+    NodePtr tag = result_node;
+    path.push_back(tag->Index());
+    while (tag) {
+        auto super_edge = tag->LocalPath();
 
-	std::list<Idx> result_path = map_->FullPath(path);
+        for (auto i = 1; i < super_edge.size(); ++i) {
+            path.push_back(super_edge[i]);
+        }
+        
+        tag = tag->Parent();
+    }
 
-	time_search_ += RelativeTime(start);
-	return result_path;
+    std::reverse(path.begin(), path.end());
+
+    time_search_ += RelativeTime(start);
+    return path;
 }
 
 // this is important

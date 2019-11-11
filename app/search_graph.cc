@@ -31,6 +31,7 @@ int main(int argc, char** argv) {
     RealNum eps = initial_eps;
     SizeType step = 1;
     SizeType addtional = 0;
+
     std::ofstream fout;
     fout.open(file_to_write);
     if (!fout.is_open()) {
@@ -38,8 +39,16 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    search.PrintTitle(std::cout);
+    std::ofstream fout_result;
+    fout_result.open(file_to_write + "_result");
 
+    if (!fout_result.is_open()) {
+        std::cerr << file_to_write + "_result" << " cannot be opened!" << std::endl;
+        exit(1);
+    }
+
+    search.PrintTitle(std::cout);
+    std::vector<Idx> path;
     for (SizeType graph_size = step; graph_size <= graph->NumVertices(); graph_size += step) {
         search.ExpandVirtualGraph(graph_size, method > 0);
         addtional += step;
@@ -55,14 +64,22 @@ int main(int argc, char** argv) {
         }
 
         if (method == 1) {
-            auto path = search.SearchVirtualGraph(p, eps);
+            path = search.SearchVirtualGraph(p, eps);
         }
         else {
-            auto path = search.SearchVirtualGraphCompleteLazy(p, eps);
+            path = search.SearchVirtualGraphCompleteLazy(p, eps);
         }
         
         search.PrintResult(std::cout);
         search.PrintResult(fout);
+
+        fout_result << graph_size << ": ";
+
+        for (auto& p : path) {
+            fout_result << p << " ";
+        }
+
+        fout_result << std::endl;
 
         addtional = 0;
     }

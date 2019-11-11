@@ -362,6 +362,7 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
         i++;
     }
 #else
+#if USE_PLANAR
 	// Planar robot.
     i = 0;
     auto space = ob::StateSpacePtr(new ob::RealVectorStateSpace(dof));
@@ -389,6 +390,37 @@ void Inspection::Graph::ReadFromFiles(const String file_name, const bool read_co
 
         i++;
     }
+
+#else
+    // Drone robot
+    i = 0;
+    auto space = ob::StateSpacePtr(new DroneStateSpace());
+
+    while (getline(fin, line)) {
+        std::istringstream sin(line);
+        String field;
+        Idx index;
+        std::vector<RealNum> config(5, 0.0);
+
+        sin >> index;
+        if (i != index) {
+            std::cerr << "Incorrect vertex index!" << std::endl;
+            exit(1);
+        }
+
+        for (Idx i = 0; i < dof; ++i) {
+            sin >> config[i];
+        }
+
+        vertices_[i]->state = space->allocState();
+
+        vertices_[i]->state->as<DroneStateSpace::StateType>()->SetPosition(Vec3(config[0], config[1], config[2]));
+        vertices_[i]->state->as<DroneStateSpace::StateType>()->SetYaw(config[3]);
+        vertices_[i]->state->as<DroneStateSpace::StateType>()->SetCameraAngle(config[4]);
+
+        i++;
+    }
+#endif
 
 #endif
 	fin.close();

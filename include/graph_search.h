@@ -39,8 +39,8 @@ public:
     GraphSearch(Inspection::GPtr graph);
     
     SizeType ExpandVirtualGraph(SizeType new_size, bool lazy_computation=true);
-    std::list<Idx> SearchVirtualGraphCompleteLazy(const RealNum p=1.0, const RealNum eps=0.0);
-    std::list<Idx> SearchVirtualGraph(const RealNum p=1.0, const RealNum eps=0.0);
+    std::vector<Idx> SearchVirtualGraphCompleteLazy(const RealNum p=1.0, const RealNum eps=0.0);
+    std::vector<Idx> SearchVirtualGraph(const RealNum p=1.0, const RealNum eps=0.0);
     SizeType VirtualGraphCoverageSize() const;
     SizeType ResultCoverageSize() const;
     RealNum ResultCost() const;
