@@ -17,8 +17,7 @@ struct InspectPoint {
     SizeType idx;
     Vec3 point;
     InspectPoint(const SizeType i, const Vec3& p)
-        : idx(i), point(p)
-    {
+        : idx(i), point(p) {
     }
 
 };
@@ -39,7 +38,7 @@ struct Cmp {
 using NodeSet = std::set<NodePair, Cmp>;
 
 class BridgeEnvironment {
-public:
+  public:
     BridgeEnvironment(const Idx seed=1);
     ~BridgeEnvironment() = default;
 
@@ -53,14 +52,20 @@ public:
     RealNum EnvironmentBoundary(const Idx dim, const bool request_min=true);
 
     SizeType NumTargets() const;
-    std::vector<SizeType> GetVisiblePointIndices(const Vec3& pos, const Vec3& tang, const RealNum fov_in_rad,  const RealNum min_dof, const RealNum max_dof) const;
-    bool IfCorrectDirection(const Vec3& pos, const Vec3& tang, const RealNum fov_in_rad, const RealNum dist) const;
+    std::vector<SizeType> GetVisiblePointIndices(const Vec3& pos, const Vec3& tang,
+            const RealNum fov_in_rad,  const RealNum min_dof, const RealNum max_dof) const;
+    bool IfCorrectDirection(const Vec3& pos, const Vec3& tang, const RealNum fov_in_rad,
+                            const RealNum dist) const;
+    std::vector<Vec3> IndicesToPoints(const std::vector<Idx>& indices) const;
 
-private:
+  private:
     SizeType global_idx_{0};
     SizeType obstacle_idx_{0};
-    nigh::Nigh<InspectPoint, nigh::L2Space<RealNum, 3>, InspectPointKey, nigh::Concurrent, nigh::KDTreeBatch<>> nn_;
-    nigh::Nigh<InspectPoint, nigh::L2Space<RealNum, 3>, InspectPointKey, nigh::Concurrent, nigh::KDTreeBatch<>> nn_obstacles_;
+    nigh::Nigh<InspectPoint, nigh::L2Space<RealNum, 3>, InspectPointKey, nigh::Concurrent, nigh::KDTreeBatch<>>
+            nn_;
+    nigh::Nigh<InspectPoint, nigh::L2Space<RealNum, 3>, InspectPointKey, nigh::Concurrent, nigh::KDTreeBatch<>>
+            nn_obstacles_;
+    std::vector<Vec3> raw_vertices_;
     std::vector<Vec3> vertices_;
     std::vector<SizeType> vertex_idx_;
     RealNum min_x_;

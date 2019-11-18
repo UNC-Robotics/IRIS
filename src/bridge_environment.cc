@@ -22,7 +22,7 @@ BridgeEnvironment::BridgeEnvironment(const Idx seed) {
     io::LoadObjModel(kBridgeStructureFilename, pos, texture, normal, v_i, t_i, n_i);
 
     for (const auto& p : pos) {
-        vertices_.emplace_back(p[0], p[1], p[2]);
+        raw_vertices_.emplace_back(p[0], p[1], p[2]);
     }
 
     for (const auto i : v_i) {
@@ -36,6 +36,7 @@ BridgeEnvironment::BridgeEnvironment(const Idx seed) {
 }
 
 void BridgeEnvironment::AddTargetPoint(const Vec3& p) {
+    vertices_.push_back(p);
     nn_.insert(InspectPoint(global_idx_++, p));
     nn_obstacles_.insert(InspectPoint(obstacle_idx_++, p));
 
@@ -89,7 +90,13 @@ bool BridgeEnvironment::IsCollisionFree(const Vec3& p, const RealNum r) const {
 }
 
 void BridgeEnvironment::InitializeTargets() {
-    for (const auto& v : vertices_) {
+    for (const auto& v : raw_vertices_) {
+        // Avoid duplicating target points.
+        const auto neartest = nn_.nearest(v)->first.point;
+        if ((neartest - v).norm() < 1e-3) {
+            continue;
+        } 
+
         AddTargetPoint(v);
     }
 
@@ -98,11 +105,12 @@ void BridgeEnvironment::InitializeTargets() {
 
 void BridgeEnvironment::InitializeObstaclePointCloud(const RealNum unit_area) {
     for (auto i = 0; i < vertex_idx_.size(); i += 3) {
-        auto p0 = vertices_[vertex_idx_[i]];
-        auto p1 = vertices_[vertex_idx_[i+1]];
-        auto p2 = vertices_[vertex_idx_[i+2]];
+        auto p0 = raw_vertices_[vertex_idx_[i]];
+        auto p1 = raw_vertices_[vertex_idx_[i+1]];
+        auto p2 = raw_vertices_[vertex_idx_[i+2]];
 
         auto area = TriangleArea((p1 - p0).norm(), (p2 - p1).norm(), (p0 - p2).norm());
+
         if (area < unit_area) {
             continue;
         }
@@ -132,15 +140,24 @@ RealNum BridgeEnvironment::RandomNum(const RealNum min, const RealNum max) const
 
 RealNum BridgeEnvironment::EnvironmentBoundary(const Idx dim, const bool request_min) {
     if (dim == 0) {
-        if (request_min) { return min_x_; }
+        if (request_min) {
+            return min_x_;
+        }
+
         return max_x_;
     }
     else if (dim == 1) {
-        if (request_min) { return min_y_; }
+        if (request_min) {
+            return min_y_;
+        }
+
         return max_y_;
     }
 
-    if (request_min) { return min_z_; }
+    if (request_min) {
+        return min_z_;
+    }
+
     return max_z_;
 }
 
@@ -148,7 +165,8 @@ SizeType BridgeEnvironment::NumTargets() const {
     return global_idx_;
 }
 
-std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos, const Vec3& tang, const RealNum fov_in_rad, const RealNum min_dof, const RealNum max_dof) const {
+std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos, const Vec3& tang,
+        const RealNum fov_in_rad, const RealNum min_dof, const RealNum max_dof) const {
     std::vector<SizeType> visible_points;
 
     // Compute points in valid range.
@@ -162,6 +180,7 @@ std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos,
     auto obstacle_set = NearestObstaclesInShpere(pos, max_dof);
 
     std::vector<Vec3> rays;
+
     for (auto& node : obstacle_set) {
         auto p = node.first.point;
         auto camera_to_point = p - pos;
@@ -172,8 +191,10 @@ std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos,
         }
 
         bool visible = true;
+
         for (auto& other : rays) {
             auto angle_diff = std::acos(camera_to_point.normalized().dot(other.normalized()));
+
             if (fabs(angle_diff) < 2.0/180.0 * M_PI) {
                 visible = false;
                 break;
@@ -190,7 +211,8 @@ std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos,
     return visible_points;
 }
 
-bool BridgeEnvironment::IfCorrectDirection(const Vec3& pos, const Vec3& tang, const RealNum fov_in_rad, const RealNum dist) const {
+bool BridgeEnvironment::IfCorrectDirection(const Vec3& pos, const Vec3& tang,
+        const RealNum fov_in_rad, const RealNum dist) const {
     auto obstacle_set = NearestObstaclesInShpere(pos, dist);
 
     for (auto& node : obstacle_set) {
@@ -204,6 +226,16 @@ bool BridgeEnvironment::IfCorrectDirection(const Vec3& pos, const Vec3& tang, co
     }
 
     return false;
+}
+
+std::vector<Vec3> BridgeEnvironment::IndicesToPoints(const std::vector<Idx>& indices) const {
+    std::vector<Vec3> points;
+
+    for (auto& i : indices) {
+        points.push_back(vertices_[i]);
+    }
+
+    return points;
 }
 
 }

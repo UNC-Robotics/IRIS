@@ -48,12 +48,12 @@ private:
     Idx seed_;
     Rand rng_;
     RealUniformDist uni_;
-    RealNum step_size_{100.0};
+    RealNum step_size_{3.0};
     bool k_nearest_{true};
     bool validate_all_edges_{true};
     SizeType incremental_step_{100};
     RealNum reject_ratio_{1.0};
-    RealNum validation_distance_{5.0};
+    RealNum validation_distance_{10.0};
 
     ob::SpaceInformationPtr space_info_;
 
