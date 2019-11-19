@@ -109,6 +109,8 @@ void BridgeEnvironment::InitializeObstaclePointCloud(const RealNum unit_area) {
         auto p1 = raw_vertices_[vertex_idx_[i+1]];
         auto p2 = raw_vertices_[vertex_idx_[i+2]];
 
+        faces_.emplace_back(vertex_idx_[i], vertex_idx_[i+1], vertex_idx_[i+2]);
+
         auto area = TriangleArea((p1 - p0).norm(), (p2 - p1).norm(), (p0 - p2).norm());
 
         if (area < unit_area) {
@@ -165,6 +167,52 @@ SizeType BridgeEnvironment::NumTargets() const {
     return global_idx_;
 }
 
+// std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos, const Vec3& tang,
+//         const RealNum fov_in_rad, const RealNum min_dof, const RealNum max_dof) const {
+//     std::vector<SizeType> visible_points;
+
+//     // Compute points in valid range.
+//     auto large_set = NearestTargetsInSphere(pos, max_dof);
+//     auto small_set = NearestTargetsInSphere(pos, min_dof);
+
+//     for (auto& p : small_set) {
+//         large_set.erase(p);
+//     }
+
+//     auto obstacle_set = NearestObstaclesInShpere(pos, max_dof);
+
+//     std::vector<Vec3> rays;
+
+//     for (auto& node : obstacle_set) {
+//         auto p = node.first.point;
+//         auto camera_to_point = p - pos;
+//         auto angle = std::acos(camera_to_point.normalized().dot(tang.normalized()));
+
+//         if (angle > 0.5*fov_in_rad) {
+//             continue;
+//         }
+
+//         bool visible = true;
+
+//         for (auto& other : rays) {
+//             auto angle_diff = std::acos(camera_to_point.normalized().dot(other.normalized()));
+
+//             if (fabs(angle_diff) < 2.0/180.0 * M_PI) {
+//                 visible = false;
+//                 break;
+//             }
+//         }
+
+//         if (visible && node.first.idx < global_idx_) {
+//             visible_points.push_back(node.first.idx);
+//         }
+
+//         rays.push_back(camera_to_point);
+//     }
+
+//     return visible_points;
+// }
+
 std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos, const Vec3& tang,
         const RealNum fov_in_rad, const RealNum min_dof, const RealNum max_dof) const {
     std::vector<SizeType> visible_points;
@@ -173,29 +221,30 @@ std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos,
     auto large_set = NearestTargetsInSphere(pos, max_dof);
     auto small_set = NearestTargetsInSphere(pos, min_dof);
 
-    for (auto& p : small_set) {
+    for (const auto& p : small_set) {
         large_set.erase(p);
     }
 
-    auto obstacle_set = NearestObstaclesInShpere(pos, max_dof);
-
-    std::vector<Vec3> rays;
-
-    for (auto& node : obstacle_set) {
-        auto p = node.first.point;
-        auto camera_to_point = p - pos;
-        auto angle = std::acos(camera_to_point.normalized().dot(tang.normalized()));
+    // Ray shooting to every point
+    for (const auto& node : large_set) {
+        const auto p = node.first.point;
+        const auto camera_to_point = (p - pos);
+        const auto camera_to_point_normalized = camera_to_point.normalized();
+        const auto angle = std::acos(camera_to_point_normalized.dot(tang.normalized()));
 
         if (angle > 0.5*fov_in_rad) {
             continue;
         }
 
         bool visible = true;
+        const auto dist = camera_to_point.norm();
+        RealNum t, u, v;
+        for (const auto& f : faces_) {
+            const auto& v0 = raw_vertices_[f[0]];
+            const auto& v1 = raw_vertices_[f[1]];
+            const auto& v2 = raw_vertices_[f[2]];
 
-        for (auto& other : rays) {
-            auto angle_diff = std::acos(camera_to_point.normalized().dot(other.normalized()));
-
-            if (fabs(angle_diff) < 2.0/180.0 * M_PI) {
+            if (RayTriangleIntersect(pos, camera_to_point_normalized, v0, v1, v2, &t, &u, &v) && t < dist - EPS) {
                 visible = false;
                 break;
             }
@@ -204,11 +253,37 @@ std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos,
         if (visible && node.first.idx < global_idx_) {
             visible_points.push_back(node.first.idx);
         }
-
-        rays.push_back(camera_to_point);
     }
 
     return visible_points;
+}
+
+bool BridgeEnvironment::RayTriangleIntersect(const Vec3& org, const Vec3& dir, const Vec3& v0, const Vec3& v1, const Vec3& v2, RealNum* t, RealNum* u, RealNum* v) const {
+    const auto v0v1 = v1 - v0;
+    const auto v0v2 = v2 - v0;
+    const auto pvec = dir.cross(v0v2);
+    RealNum det = v0v1.dot(pvec);
+
+    if (std::fabs(det) < EPS) {
+        return false;
+    }
+
+    RealNum inv_det = 1.0/det;
+
+    const auto tvec = org - v0;
+    *u = tvec.dot(pvec) * inv_det;
+    if (*u < 0 || *u > 1) {
+        return false;
+    }
+
+    const auto qvec = tvec.cross(v0v1);
+    *v = dir.dot(qvec) * inv_det;
+    if (*v < 0 || *u + *v > 1) {
+        return false;
+    }
+
+    *t = v0v2.dot(qvec) * inv_det;
+    return true;
 }
 
 bool BridgeEnvironment::IfCorrectDirection(const Vec3& pos, const Vec3& tang,
