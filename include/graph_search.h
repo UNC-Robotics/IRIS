@@ -13,23 +13,29 @@
 class GraphSearch {
     static RealNum Key(const NodePtr n) {
 #if USE_HEURISTIC
-	return n->CostToCome() + HEUR_BIAS*n->Heuristic();
+        return n->CostToCome() + HEUR_BIAS*n->Heuristic();
 #endif
-	return n->CostToCome();
+
+#if USE_GHOST_DATA
+#if USE_GHOST_COST_AS_KEY
+        return n->GhostCost();
+#endif
+#endif
+        return n->CostToCome();
     }
     
     struct Cmp {
-    	bool operator() (const NodePtr n1, const NodePtr n2) const {
-    	    // smaller key comes first
-    	    return Key(n1) > Key(n2);
-    	}
+        bool operator() (const NodePtr n1, const NodePtr n2) const {
+            // smaller key comes first
+            return Key(n1) > Key(n2);
+        }
     };
     
     struct CoverageCmp {
-    	bool operator() (const NodePtr n1, const NodePtr n2) const {
-    	    // larger coverage comes first
-    	    return n1->CoverageSize() < n2->CoverageSize();
-    	}
+        bool operator() (const NodePtr n1, const NodePtr n2) const {
+            // larger coverage comes first
+            return n1->CoverageSize() < n2->CoverageSize();
+        }
     };
     
     using PriorityQueue = std::priority_queue<NodePtr, std::vector<NodePtr>, Cmp>;

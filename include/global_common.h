@@ -17,6 +17,7 @@
 #define USE_PLANAR 0
 
 #define USE_GHOST_DATA 1
+#define USE_GHOST_COST_AS_KEY 1
 
 #define USE_HEURISTIC 0
 
