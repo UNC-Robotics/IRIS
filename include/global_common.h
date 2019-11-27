@@ -28,8 +28,8 @@
 #if USE_PLANAR
 #define MAX_COVERAGE_SIZE 400
 #else
-#define MAX_COVERAGE_SIZE 27384
-#endif
+#define MAX_COVERAGE_SIZE 3817 // 14021
+#endif // USE_PLANAR
 
 #endif // USE_CRISP
 

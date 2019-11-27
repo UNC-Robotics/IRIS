@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 
     // Robot.
     auto robot = std::make_shared<drone::DroneRobot>(0.196, 0.2895, -0.049);
-    robot->SetCameraParameters(94.0/180 * M_PI, 0.2, 5.0);
+    robot->SetCameraParameters(94.0/180 * M_PI, 0.2, 10.0);
     robot->Initialize();
 
     // Environment setup.
