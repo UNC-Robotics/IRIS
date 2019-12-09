@@ -290,7 +290,7 @@ NodePtr GraphSearch::PopFromQueue() {
 #endif
 
     // if this node is not subsumed by other nodes
-    if (!node_to_pop->IsSubsumed()) {
+    if (node_to_pop->Latest() && !node_to_pop->IsSubsumed()) {
         // if this node is the latest successor of its parent
         if (IsUpToDate(node_to_pop)) {
             if (!node_to_pop->IsChecked()) {
@@ -328,7 +328,7 @@ NodePtr GraphSearch::PopFromQueueCompleteLazy() {
 #endif
 
     // if this node is not subsumed by other nodes
-    if (!node_to_pop->IsSubsumed()) {
+    if (node_to_pop->Latest() && !node_to_pop->IsSubsumed()) {
         // if this node is the latest successor of its parent
         open_sets_[node_to_pop->Index()].erase(node_to_pop);
         closed_sets_[node_to_pop->Index()].insert(node_to_pop);
@@ -578,7 +578,23 @@ bool GraphSearch::DominatedByOpenState(NodePtr& node) {
             getchar();
 #endif
 
+#if USE_GHOST_COST_AS_KEY
+            auto cost_before = s->GhostCost();
+#endif
+
             s->Subsume(node);
+
+#if USE_GHOST_COST_AS_KEY
+            auto cost_after = s->GhostCost();
+            if (cost_after < cost_before) {
+                NodePtr updated(new Node(s));
+                s->SetLatest(false);
+                open_sets_[index].erase(s);
+                open_sets_[index].insert(updated);
+                queue_->push(updated);
+            }
+#endif
+
             return true;
         }
 
@@ -635,7 +651,23 @@ bool GraphSearch::DominatedByOpenStateCompleteLazy(NodePtr& node) {
         NodePtr s = *it;
 
         if (Dominates(s, node)) {
+#if USE_GHOST_COST_AS_KEY
+            auto cost_before = s->GhostCost();
+#endif
+
             s->Subsume(node);
+
+#if USE_GHOST_COST_AS_KEY
+            auto cost_after = s->GhostCost();
+            if (cost_after < cost_before) {
+                NodePtr updated(new Node(s));
+                s->SetLatest(false);
+                open_sets_[index].erase(s);
+                open_sets_[index].insert(updated);
+                queue_->push(updated);
+            }
+#endif
+
             return true;
         }
 

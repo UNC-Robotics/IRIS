@@ -61,6 +61,9 @@ public:
 	void SetSuccessorStaturID(const Idx id);
 	Idx SuccessorStatusID() const;
 
+	bool Latest() const;
+	void SetLatest(const bool if_latest);
+
 #if USE_GHOST_DATA
 	void SetGhostVisSet(const VisibilitySet& set);
 	void ExtendGhostVisSet(const VisibilitySet& set);
@@ -88,6 +91,8 @@ private:
 	RealNum cost_to_come_{0};
 	VisibilitySet vis_set_;
 	NodePtr parent_{nullptr};
+
+	bool if_latest_{true};
 
 	std::vector<Idx> local_path_;
 	Idx successor_status_id_{0};

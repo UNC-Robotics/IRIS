@@ -17,7 +17,12 @@
 #define USE_PLANAR 0
 
 #define USE_GHOST_DATA 1
+
+#if USE_GHOST_DATA
 #define USE_GHOST_COST_AS_KEY 1
+#else
+#define USE_GHOST_COST_AS_KEY 0
+#endif
 
 #define USE_HEURISTIC 0
 

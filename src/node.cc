@@ -16,6 +16,8 @@ void Node::DeepCopy(const NodePtr& other) {
 	parent_ = other->Parent();
 	local_path_ = other->LocalPath();
 
+	if_latest_  = other->Latest();
+
 #if USE_GHOST_DATA
 	ghost_cost_ = other->GhostCost();
 	ghost_vis_set_ = other->GhostVisSet();
@@ -205,6 +207,14 @@ void Node::SetSuccessorStaturID(const Idx id) {
 
 Idx Node::SuccessorStatusID() const {
 	return successor_status_id_;
+}
+
+bool Node::Latest() const {
+	return if_latest_;
+}
+
+void Node::SetLatest(const bool if_latest) {
+	if_latest_ = if_latest;
 }
 
 
