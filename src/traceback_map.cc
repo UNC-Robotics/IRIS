@@ -295,6 +295,19 @@ std::vector<std::vector<Idx>> TracebackMap::FirstMeetSuccessors(const Idx source
 	return successors;
 }
 
+std::vector<std::vector<Idx>> TracebackMap::NeighboringSuccessors(const Idx source) {
+	auto neig = NeighborList(source);
+	std::vector<std::vector<Idx>> successors;
+
+	for (const auto& v : neig) {
+		std::vector<Idx> local_path{v, source};
+		successors.push_back(local_path);
+		AddCost(v, source, EdgeCost(v, source));
+	}
+
+	return successors;
+}
+
 std::list<Idx> TracebackMap::FullPath(const std::vector<Idx> milestones) const {
 	std::list<Idx> path;
 	SizeType len = milestones.size();

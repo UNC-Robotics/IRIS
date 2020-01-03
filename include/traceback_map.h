@@ -49,6 +49,7 @@ public:
 	std::vector<std::vector<Idx>> Successors(const Idx source, const VisibilitySet& current_vis_set, const Inspection::GPtr graph);
 	std::vector<RealNum> SingleSourceShortestDistance(const Idx source, bool query=false, const Idx target=0) const;
 	std::vector<std::vector<Idx>> FirstMeetSuccessors(const Idx source, const VisibilitySet& current_vis_set, const Inspection::GPtr graph);
+	std::vector<std::vector<Idx>> NeighboringSuccessors(const Idx source);
 	std::list<Idx> FullPath(const std::vector<Idx> milestones) const;
 	bool Connected(const Inspection::GPtr& graph) const;
 	void CheckLowerBound(const Idx source, const String message) const;

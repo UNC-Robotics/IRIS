@@ -369,7 +369,8 @@ void GraphSearch::ComputeAndAddSuccessors(const NodePtr parent) {
     Idx id = parent->SuccessorStatusID();
 
     // auto successors = map_->Successors(parent->Index(), parent->VisSet(), graph_);
-    auto successors = map_->FirstMeetSuccessors(parent->Index(), parent->VisSet(), graph_);
+    // auto successors = map_->FirstMeetSuccessors(parent->Index(), parent->VisSet(), graph_);
+    auto successors = map_->NeighboringSuccessors(parent->Index());
     for (const auto& s : successors) {
         Idx m = s[0];
         NodePtr new_node(new Node());
@@ -413,7 +414,8 @@ void GraphSearch::ComputeAndAddSuccessorsCompleteLazy(const NodePtr parent) {
 #endif
 
     // auto successors = map_->Successors(parent->Index(), parent->VisSet(), graph_);
-    auto successors = map_->FirstMeetSuccessors(parent->Index(), parent->VisSet(), graph_);
+    // auto successors = map_->FirstMeetSuccessors(parent->Index(), parent->VisSet(), graph_);
+    auto successors = map_->NeighboringSuccessors(parent->Index());
     for (const auto& s : successors) {
         Idx m = s[0];
         NodePtr new_node(new Node());
