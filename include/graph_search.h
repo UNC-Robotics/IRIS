@@ -11,17 +11,20 @@
 #include "traceback_map.h"
 
 class GraphSearch {
-    static RealNum Key(const NodePtr n) {
-#if USE_HEURISTIC
-        return n->CostToCome() + HEUR_BIAS*n->Heuristic();
-#endif
-
+    static RealNum KeyBase(const NodePtr n) {
 #if USE_GHOST_DATA
 #if USE_GHOST_COST_AS_KEY
         return n->GhostCost();
 #endif
 #endif
         return n->CostToCome();
+    }
+
+    static RealNum Key(const NodePtr n) {
+#if USE_HEURISTIC
+        return KeyBase(n) + HEUR_BIAS*n->Heuristic();
+#endif
+        return KeyBase(n);
     }
     
     struct Cmp {
