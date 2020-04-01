@@ -511,15 +511,9 @@ bool GraphSearch::InGoalSet(const NodePtr n) const {
 bool GraphSearch::DominatedByClosedState(const NodePtr node) const {
 	auto states = closed_sets_[node->Index()];
 	for (const auto s : states) {
-#if USE_HEURISTIC
-        if (s->CostToCome() < node->CostToCome() && s->VisSet().Contains(node->VisSet())) {
+        if (s->CostToCome() <= node->CostToCome() && s->VisSet().Contains(node->VisSet())) {
             return true;
         }
-#else
-		if (s->VisSet().Contains(node->VisSet())) {
-			return true;
-		}
-#endif
 	}
 
 	return false;
