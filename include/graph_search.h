@@ -86,6 +86,7 @@ private:
     void ComputeAndAddSuccessors(const NodePtr p);
     void ComputeAndAddSuccessorsCompleteLazy(const NodePtr p);
     bool InGoalSet(const NodePtr n) const;
+    bool StronglyDominates(const RealNum& l1, const VisibilitySet& s1, const RealNum& l2, const VisibilitySet& s2) const;
     bool DominatedByClosedState(const NodePtr node) const;
     bool DominatedByOpenState(NodePtr& node);
     bool DominatedByOpenStateCompleteLazy(NodePtr& node);

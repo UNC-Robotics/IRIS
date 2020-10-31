@@ -508,15 +508,39 @@ bool GraphSearch::InGoalSet(const NodePtr n) const {
 	return (n->VisSet() == virtual_graph_coverage_);
 }
 
+bool GraphSearch::StronglyDominates(const RealNum& l1, const VisibilitySet& s1, const RealNum& l2, const VisibilitySet& s2) const {
+    if (l1 > l2) {
+        return false;
+    }
+
+    if (!s1.Contains(s2)) {
+        return false;
+    }
+
+    return true;
+}
+
 bool GraphSearch::DominatedByClosedState(const NodePtr node) const {
 	auto states = closed_sets_[node->Index()];
-	for (const auto s : states) {
-        if (s->CostToCome() <= node->CostToCome() && s->VisSet().Contains(node->VisSet())) {
+    for (const auto s : states) {
+#if USE_GHOST_DATA
+        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->GhostCost(), node->GhostVisSet())) {
+            // New state is completely dominated.
             return true;
         }
-	}
 
-	return false;
+        if (this->StronglyDominates(s->GhostCost(), s->GhostVisSet(), node->GhostCost(), node->GhostVisSet())) {
+            s->Subsume(node);
+            return true;
+        }
+#else
+        if (this->StronglyDominates(s->CostToCome(), s->VisSet(), node->CostToCome(), node->VisSet())) {
+            return true;
+        }
+#endif
+    }
+
+    return false;
 }
 
 bool GraphSearch::DominatedByOpenState(NodePtr& node) {
