@@ -93,9 +93,10 @@ void BridgeEnvironment::InitializeTargets() {
     for (const auto& v : raw_vertices_) {
         // Avoid duplicating target points.
         const auto neartest = nn_.nearest(v)->first.point;
+
         if ((neartest - v).norm() < 1e-3) {
             continue;
-        } 
+        }
 
         AddTargetPoint(v);
     }
@@ -239,12 +240,14 @@ std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos,
         bool visible = true;
         const auto dist = camera_to_point.norm();
         RealNum t, u, v;
+
         for (const auto& f : faces_) {
             const auto& v0 = raw_vertices_[f[0]];
             const auto& v1 = raw_vertices_[f[1]];
             const auto& v2 = raw_vertices_[f[2]];
 
-            if (RayTriangleIntersect(pos, camera_to_point_normalized, v0, v1, v2, &t, &u, &v) && t < dist - EPS) {
+            if (RayTriangleIntersect(pos, camera_to_point_normalized, v0, v1, v2, &t, &u, &v)
+                    && t < dist - EPS) {
                 visible = false;
                 break;
             }
@@ -258,7 +261,8 @@ std::vector<SizeType> BridgeEnvironment::GetVisiblePointIndices(const Vec3& pos,
     return visible_points;
 }
 
-bool BridgeEnvironment::RayTriangleIntersect(const Vec3& org, const Vec3& dir, const Vec3& v0, const Vec3& v1, const Vec3& v2, RealNum* t, RealNum* u, RealNum* v) const {
+bool BridgeEnvironment::RayTriangleIntersect(const Vec3& org, const Vec3& dir, const Vec3& v0,
+        const Vec3& v1, const Vec3& v2, RealNum* t, RealNum* u, RealNum* v) const {
     const auto v0v1 = v1 - v0;
     const auto v0v2 = v2 - v0;
     const auto pvec = dir.cross(v0v2);
@@ -272,12 +276,14 @@ bool BridgeEnvironment::RayTriangleIntersect(const Vec3& org, const Vec3& dir, c
 
     const auto tvec = org - v0;
     *u = tvec.dot(pvec) * inv_det;
+
     if (*u < 0 || *u > 1) {
         return false;
     }
 
     const auto qvec = tvec.cross(v0v1);
     *v = dir.dot(qvec) * inv_det;
+
     if (*v < 0 || *u + *v > 1) {
         return false;
     }

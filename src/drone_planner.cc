@@ -5,8 +5,7 @@ extern bool extern_validate_sample;
 namespace drone {
 
 DronePlanner::DronePlanner(const RobotPtr& robot, const EnvPtr& env, const Idx seed)
-     : robot_(robot), env_(env), seed_(seed)
-{
+    : robot_(robot), env_(env), seed_(seed) {
     rng_.seed(seed_);
     uni_ = RealUniformDist(0, 1);
 
@@ -21,13 +20,14 @@ void DronePlanner::SampleStartConfig(const Idx max_iter, const Idx seed) {
     Rand rng;
     rng.seed(seed);
     RealUniformDist uni(0, 1);
-    
+
     Vec3 pos;
     RealNum yaw, camera_angle;
 
     for (auto i = 0; i < max_iter; ++i) {
         for (auto j = 0; j < 3; ++j) {
-            auto lo = (j == 2)? env_->EnvironmentBoundary(j) : env_->EnvironmentBoundary(j) - validation_distance_;
+            auto lo = (j == 2)? env_->EnvironmentBoundary(j) : env_->EnvironmentBoundary(
+                          j) - validation_distance_;
             auto hi = env_->EnvironmentBoundary(j, false) + validation_distance_;
             pos[j] = uni(rng)*(hi - lo) + lo;
         }
@@ -39,7 +39,8 @@ void DronePlanner::SampleStartConfig(const Idx max_iter, const Idx seed) {
         robot_->ComputeShape();
 
         if (env_->IsCollisionFree(robot_->Config()->Position(), robot_->SphereRadius())
-            && env_->IfCorrectDirection(robot_->CameraPos(), robot_->CameraTangent(), robot_->FOV(), validation_distance_)) {     
+                && env_->IfCorrectDirection(robot_->CameraPos(), robot_->CameraTangent(), robot_->FOV(),
+                                            validation_distance_)) {
             robot_->SaveStartConfig();
             std::cout << "Found at " << i << std::endl;
             std::cout << "Start config: ";
@@ -74,14 +75,14 @@ void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx
         else {
             bounds.setLow(i, env_->EnvironmentBoundary(i));
         }
-        
+
         bounds.setHigh(i, env_->EnvironmentBoundary(i, false) + validation_distance_);
     }
 
     bounds.setLow(3, kMinYaw);
     bounds.setHigh(3, kMaxYaw);
     bounds.setLow(4, kMinCameraAngle);
-    bounds.setHigh(4, kMaxCameraAngle);    
+    bounds.setHigh(4, kMaxCameraAngle);
     state_space_->as<DroneStateSpace>()->setBounds(bounds);
 
     // Space info.
@@ -93,7 +94,7 @@ void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx
 
     // Problem definition.
     auto problem_def = ob::ProblemDefinitionPtr(new ob::ProblemDefinition(space_info_));
-    ob::State *start = space_info_->allocState();
+    ob::State* start = space_info_->allocState();
     state_space_->as<DroneStateSpace>()->StateFromConfiguration(start, robot_->StartConfig());
 
     problem_def->addStartState(start);
@@ -111,15 +112,15 @@ void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx
     planner->setup();
 
     // Build graph incrementally.
-    Inspection::Graph *graph = new Inspection::Graph();
-    
+    Inspection::Graph* graph = new Inspection::Graph();
+
     ob::PlannerData tree_data(space_info_);
     ob::PlannerData graph_data(space_info_);
 
     while (graph->NumVertices() < target_size) {
         BuildRRGIncrementally(graph, planner, tree_data, graph_data);
-        std::cout << "Covered targets: " << graph->NumTargetsCovered() 
-            << ", " << graph->NumTargetsCovered()*(RealNum)100/num_targets_ << "%" << std::endl;
+        std::cout << "Covered targets: " << graph->NumTargetsCovered()
+                  << ", " << graph->NumTargetsCovered()*(RealNum)100/num_targets_ << "%" << std::endl;
     }
 
     graph->Save(file_name, true);
@@ -127,11 +128,10 @@ void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx
     delete graph;
 }
 
-void DronePlanner::BuildRRGIncrementally(Inspection::Graph *graph, 
-                            ob::PlannerPtr& planner, 
-                            ob::PlannerData& tree_data, 
-                            ob::PlannerData& graph_data) 
-{
+void DronePlanner::BuildRRGIncrementally(Inspection::Graph* graph,
+        ob::PlannerPtr& planner,
+        ob::PlannerData& tree_data,
+        ob::PlannerData& graph_data) {
     // use ompl planner
     const TimePoint start = Clock::now();
     ob::PlannerStatus solved;
@@ -144,6 +144,7 @@ void DronePlanner::BuildRRGIncrementally(Inspection::Graph *graph,
     SizeType avg_time_build = 0;
     Idx prev_size = graph->NumVertices();
     Idx current_size = tree_data.numVertices();
+
     if (current_size > prev_size) {
         avg_time_build = SizeType(total_time_build/(current_size - prev_size));
     }
@@ -178,10 +179,11 @@ void DronePlanner::BuildRRGIncrementally(Inspection::Graph *graph,
             Inspection::EPtr edge(new Inspection::Edge(p, i));
             edge->checked = true;
             edge->valid = true;
-            edge->cost = space_info_->distance(tree_data.getVertex(p).getState(), tree_data.getVertex(i).getState());
+            edge->cost = space_info_->distance(tree_data.getVertex(p).getState(),
+                                               tree_data.getVertex(i).getState());
             graph->AddEdge(edge);
         }
-        else if (num_parent != 0){
+        else if (num_parent != 0) {
             std::cerr << "More than one parent! Error!" << std::endl;
             exit(1);
         }
@@ -190,10 +192,10 @@ void DronePlanner::BuildRRGIncrementally(Inspection::Graph *graph,
         edges.clear();
         graph_data.getEdges(i, edges);
 
-        for (auto && e : edges) {
+        for (auto&& e : edges) {
             Inspection::EPtr edge(new Inspection::Edge(i, e));
-            const ob::State *source = tree_data.getVertex(i).getState();
-            const ob::State *target = tree_data.getVertex(e).getState();
+            const ob::State* source = tree_data.getVertex(i).getState();
+            const ob::State* target = tree_data.getVertex(e).getState();
             edge->cost = space_info_->distance(source, target);
 
             if (validate_all_edges_) {
@@ -229,10 +231,11 @@ void DronePlanner::ComputeVisibilitySet(Inspection::VPtr vertex) const {
     this->ComputeRobotVisibilitySet(vertex->vis);
 }
 
-bool DronePlanner::StateValid(const ob::State *state) {
+bool DronePlanner::StateValid(const ob::State* state) {
     const auto& s = state->as<DroneStateSpace::StateType>();
 
     auto collision_free = env_->IsCollisionFree(s->Position(), robot_->SphereRadius());
+
     if (!collision_free || !extern_validate_sample) {
         return collision_free;
     }
@@ -241,8 +244,9 @@ bool DronePlanner::StateValid(const ob::State *state) {
     robot_->SetConfig(s->Position(), s->Yaw(), s->CameraAngle());
     robot_->ComputeShape();
 
-    bool valid_direction = env_->IfCorrectDirection(robot_->CameraPos(), robot_->CameraTangent(), robot_->FOV(),
-                                 validation_distance_);
+    bool valid_direction = env_->IfCorrectDirection(robot_->CameraPos(), robot_->CameraTangent(),
+                           robot_->FOV(),
+                           validation_distance_);
 
     if (!valid_direction && RandomRealNumber(0, 1) < reject_ratio_) {
         // Camera is not facing the correct direction.
@@ -253,6 +257,7 @@ bool DronePlanner::StateValid(const ob::State *state) {
     bool valid = true;
 
     RealNum coverage = global_vis_set_.Size()/(RealNum)num_targets_;
+
     if (coverage > REJECT_START_COVERAGE) {
         if (RandomRealNumber(0, 1) < reject_check_ratio_) {
             VisibilitySet vis_set;
@@ -295,7 +300,7 @@ bool DronePlanner::StateValid(const ob::State *state) {
     return true;
 }
 
-bool DronePlanner::CheckEdge(const ob::State *source, const ob::State *target) const {
+bool DronePlanner::CheckEdge(const ob::State* source, const ob::State* target) const {
     const auto& s0 = source->as<DroneStateSpace::StateType>();
     const auto& s1 = target->as<DroneStateSpace::StateType>();
     Vec3 p0 = s0->Position();

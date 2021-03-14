@@ -39,21 +39,25 @@ CRISPDesign::CRISPDesign() {
 void CRISPDesign::SetEntryLines(const String file_name) {
     std::ifstream fin;
     fin.open(file_name);
+
     if (!fin.is_open()) {
         std::cerr << "Unable to open file: " << file_name << std::endl;
         exit(1);
     }
 
     String line;
+
     while (getline(fin, line)) {
         std::istringstream sin(line);
         String field;
         Vec3 point;
         Idx d = 0;
+
         while (getline(sin, field, ',')) {
             if (d > 1) {
                 point[d-2] = std::stof(field.c_str());
             }
+
             d++;
         }
 
@@ -63,6 +67,7 @@ void CRISPDesign::SetEntryLines(const String file_name) {
     fin.close();
 
     total_len_ = 0;
+
     for (Idx i = 0; i < entry_lines_.size(); i += 2) {
         RealNum l = (entry_lines_[i] - entry_lines_[i+1]).norm();
         entry_line_lens_.push_back(l);
@@ -87,6 +92,7 @@ Vec3 CRISPDesign::ComputeEntryPoint(const RealNum relative_position) const {
     Vec3 entry_point;
 
     RealNum rp = relative_position;
+
     for (Idx j = 0; j < entry_lines_.size(); j += 2) {
         RealNum l = entry_line_lens_[j/2];
 
@@ -155,6 +161,7 @@ RealNum& CRISPDesign::TubeLength(Idx i) {
 
 RealNum CRISPDesign::MinInsertion(Idx i) const {
     CheckIndex(i);
+
     if (i == 0) {
         return -grasp_location_;
     }
@@ -175,6 +182,7 @@ geo::Cylinder CRISPShape::ShapeSegment(Idx tube_idx, Idx segment_idx) const {
     CheckIndex(tube_idx);
 
     auto& segments = segments_[tube_idx];
+
     if (segment_idx < segments.size()) {
         return segments[segment_idx];
     }
@@ -189,6 +197,7 @@ geo::Cylinder& CRISPShape::ShapeSegment(Idx tube_idx, Idx segment_idx) {
     CheckIndex(tube_idx);
 
     auto& segments = segments_[tube_idx];
+
     if (segment_idx < segments.size()) {
         return segments[segment_idx];
     }
@@ -214,6 +223,7 @@ void CRISPShape::DeepCopy(const std::shared_ptr<CRISPShape>& other) {
     for (Idx i = 0; i < NUM_TUBES; ++i) {
         segments_[i].clear();
         auto n = other->NumSegments(i);
+
         for (Idx j = 0; j < n; ++j) {
             this->AddSegment(i, other->ShapeSegment(i, j));
         }
@@ -316,7 +326,7 @@ void CRISPConfig::DeepCopy(const std::shared_ptr<CRISPConfig>& other) {
     this->Shape()->DeepCopy(other->Shape());
 }
 
-void CRISPConfig::Print(std::ostream &out) const {
+void CRISPConfig::Print(std::ostream& out) const {
     for (Idx i = 0; i < NUM_TUBES; ++i) {
         out << "Tube " << i << std::endl;
         out << "insertion = " << insertions_[i] << std::endl;
@@ -328,9 +338,11 @@ void CRISPConfig::Print(std::ostream &out) const {
     out << "Tip tangent = " << tip_tangent_.transpose() << std::endl;
 
     out << "Kinematic state = ";
+
     for (Idx i = 0; i < AUGMENTED_DIMENSION; ++i) {
         out << kinematic_state_[i] << " ";
     }
+
     out << std::endl;
 
     out << "Stability = " << stability_ << std::endl;
@@ -342,10 +354,10 @@ void CRISPRobot::Initialize() {
     // Initialize robot design.
     design_.reset(new CRISPDesign());
     design_->SetEntryLines(kEntryLinesFileName);
-    design_->EntryPoint(kCameraIndex) 
-    = design_->ComputeEntryPoint(kCameraTubeRelativeInsertionPoint);
-    design_->EntryPoint(kSnareIndex) 
-    = design_->ComputeEntryPoint(kSnareTubeRelativeInsertionPoint);
+    design_->EntryPoint(kCameraIndex)
+        = design_->ComputeEntryPoint(kCameraTubeRelativeInsertionPoint);
+    design_->EntryPoint(kSnareIndex)
+        = design_->ComputeEntryPoint(kSnareTubeRelativeInsertionPoint);
     design_->GraspLocation() = kRelativeGraspLocation;
     design_->TubeOuterDiameter(kCameraIndex) = kTubeOuterDiameter;
     design_->TubeOuterDiameter(kSnareIndex) = kTubeOuterDiameter;
@@ -425,25 +437,28 @@ void CRISPRobot::ComputeShape() {
     // snare rod
     BasePoseConstraint snare_pose_constraint(snare_rod_p0, snare_rod_q0);
     LengthConstraint snare_length_constraint(snare_rod_insertion);
-    VariableLengthRod<decltype(snare_pose_constraint), 
-                      decltype(snare_length_constraint)> snare_rod(snare_rod_properties, snare_pose_constraint, snare_length_constraint);
+    VariableLengthRod<decltype(snare_pose_constraint),
+                      decltype(snare_length_constraint)> snare_rod(snare_rod_properties, snare_pose_constraint,
+                              snare_length_constraint);
 
     // tool rod
-    FullGraspConstraint< decltype(snare_rod) > grasp_constraint(snare_rod, grasp_location); // the location is an offset from the tip
+    FullGraspConstraint< decltype(snare_rod) > grasp_constraint(snare_rod,
+            grasp_location); // the location is an offset from the tip
     LoadFreeConstraint load_free_constraint;
     LengthConstraint tool_length_constraint(tool_rod_insertion);
     BasePoseConstraint tool_pose_constraint(tool_rod_p0, tool_rod_q0);
-    VariableLengthRod<decltype(grasp_constraint), 
-                      decltype(load_free_constraint), 
-                      decltype(tool_pose_constraint), 
-                      decltype(tool_length_constraint)> tool_rod(tool_rod_properties, grasp_constraint, load_free_constraint, tool_pose_constraint, tool_length_constraint);
+    VariableLengthRod<decltype(grasp_constraint),
+                      decltype(load_free_constraint),
+                      decltype(tool_pose_constraint),
+                      decltype(tool_length_constraint)> tool_rod(tool_rod_properties, grasp_constraint,
+                              load_free_constraint, tool_pose_constraint, tool_length_constraint);
 
     // Total system.
     System<decltype(tool_rod)> system(tool_rod);
 
     if (AUGMENTED_DIMENSION != system.state_dimension) {
-        std::cerr << "System state dimension is " << system.state_dimension 
-        << ", which is not equal to pre-defined AUGMENTED_DIMENSION = " << AUGMENTED_DIMENSION << std::endl;
+        std::cerr << "System state dimension is " << system.state_dimension
+                  << ", which is not equal to pre-defined AUGMENTED_DIMENSION = " << AUGMENTED_DIMENSION << std::endl;
         exit(1);
     }
 
@@ -451,42 +466,51 @@ void CRISPRobot::ComputeShape() {
     using ParallelRods = System<decltype(tool_rod)>;
 
     // Create the initial state.
-    ParallelRods::StateVector initial_state_vector = ParallelRods::StateVector::Zero(); // initialize to 0 at first
+    ParallelRods::StateVector initial_state_vector =
+        ParallelRods::StateVector::Zero(); // initialize to 0 at first
 
     // This code initializes the state vector for forward kinematics.
     // Initialize the portion of the state corresponding to snare rod.
     snare_rod.interpret(initial_state_vector).position() = snare_pose_constraint.position();
     snare_rod.interpret(initial_state_vector).quaternion() = snare_pose_constraint.quaternion();
+
     if (use_seed_) {
         snare_rod.interpret(initial_state_vector).moment() = Eigen::Vector3d(kinematics_seed_[21],
-                                                                   kinematics_seed_[22],
-                                                                   kinematics_seed_[23]);
+                kinematics_seed_[22],
+                kinematics_seed_[23]);
 
         snare_rod.interpret(initial_state_vector).force() = Eigen::Vector3d(kinematics_seed_[24],
-                                                                   kinematics_seed_[25],
-                                                                   kinematics_seed_[26]);
+                kinematics_seed_[25],
+                kinematics_seed_[26]);
     }
     else {
-        snare_rod.interpret(initial_state_vector).moment() = Eigen::Vector3d(0, 0, 0); //Eigen::Vector3d(-0.009, 0.002, -0.004);
-        snare_rod.interpret(initial_state_vector).force() = Eigen::Vector3d(0, 0, 0); //Eigen::Vector3d(-0.011, -0.115, 0.046);    
+        snare_rod.interpret(initial_state_vector).moment() = Eigen::Vector3d(0, 0,
+                0); //Eigen::Vector3d(-0.009, 0.002, -0.004);
+        snare_rod.interpret(initial_state_vector).force() = Eigen::Vector3d(0, 0,
+                0); //Eigen::Vector3d(-0.011, -0.115, 0.046);
     }
+
     snare_rod.interpret(initial_state_vector).length() = snare_length_constraint.length();
 
     // Initialize the portion of the state corresponding to tool rod.
     tool_rod.interpret(initial_state_vector).position() =  tool_pose_constraint.position();
     tool_rod.interpret(initial_state_vector).quaternion() = tool_pose_constraint.quaternion();
+
     if (use_seed_) {
         tool_rod.interpret(initial_state_vector).moment() = Eigen::Vector3d(kinematics_seed_[7],
-                                                                   kinematics_seed_[8],
-                                                                   kinematics_seed_[9]);
+                kinematics_seed_[8],
+                kinematics_seed_[9]);
         tool_rod.interpret(initial_state_vector).force() = Eigen::Vector3d(kinematics_seed_[10],
-                                                                   kinematics_seed_[11],
-                                                                   kinematics_seed_[12]);
+                kinematics_seed_[11],
+                kinematics_seed_[12]);
     }
     else {
-        tool_rod.interpret(initial_state_vector).moment() = Eigen::Vector3d(0, 0, 0); //Eigen::Vector3d(-0.013, 0.0, 0.004); // initial guess
-        tool_rod.interpret(initial_state_vector).force() = Eigen::Vector3d(0, 0, 0); //Eigen::Vector3d(0.011, 0.115, -0.046); // initial guess
+        tool_rod.interpret(initial_state_vector).moment() = Eigen::Vector3d(0, 0,
+                0); //Eigen::Vector3d(-0.013, 0.0, 0.004); // initial guess
+        tool_rod.interpret(initial_state_vector).force() = Eigen::Vector3d(0, 0,
+                0); //Eigen::Vector3d(0.011, 0.115, -0.046); // initial guess
     }
+
     tool_rod.interpret(initial_state_vector).length() = tool_length_constraint.length();
 
     // Solve the system whether it is forward or inverse kinematics.
@@ -497,7 +521,8 @@ void CRISPRobot::ComputeShape() {
     ObserverList<decltype(system), decltype(tool_rod)> tool_rod_observers(tool_rod, 30);
     ObserverList<decltype(system), decltype(snare_rod)> snare_rod_observers(snare_rod, 30);
     System<decltype(tool_rod)>::Solution solution;
-    system.initialize<decltype(snare_rod_observers), decltype(tool_rod_observers)>(solution, solution_state_vector, snare_rod_observers, tool_rod_observers);
+    system.initialize<decltype(snare_rod_observers), decltype(tool_rod_observers)>(solution,
+            solution_state_vector, snare_rod_observers, tool_rod_observers);
     system.integrate(solution);
 
     double residual = solution.error();
@@ -509,6 +534,7 @@ void CRISPRobot::ComputeShape() {
 
     // Save state vector.
     KinVec result_vec;
+
     for (Idx i = 0; i < AUGMENTED_DIMENSION; ++i) {
         result_vec[i] = solution_state_vector(i);
     }
@@ -519,8 +545,10 @@ void CRISPRobot::ComputeShape() {
 
     // save robot shape
     config_->Shape().reset(new CRISPShape());
+
     for (Idx i = 0; i < tool_rod_observers.size() - 1; ++i) {
-        auto cylinder = geo::Cylinder(to_segmentation_*tool_rod_observers(i).state().position().cast<RealNum>(),
+        auto cylinder = geo::Cylinder(to_segmentation_*tool_rod_observers(
+                                          i).state().position().cast<RealNum>(),
                                       to_segmentation_*tool_rod_observers(i+1).state().position().cast<RealNum>(),
                                       design_->TubeOuterDiameter(kCameraIndex));
         config_->Shape()->AddSegment(kCameraIndex, cylinder);
@@ -535,7 +563,8 @@ void CRISPRobot::ComputeShape() {
     SizeType tool_cylinder_num = config_->Shape()->NumSegments(kCameraIndex);
 
     Vec3 tip_translation = config_->Shape()->ShapeSegment(kCameraIndex, tool_cylinder_num - 1).p2;
-    Vec3 tip_tangent = (tip_translation - config_->Shape()->ShapeSegment(kCameraIndex, tool_cylinder_num - 2).p2).normalized();
+    Vec3 tip_tangent = (tip_translation - config_->Shape()->ShapeSegment(kCameraIndex,
+                        tool_cylinder_num - 2).p2).normalized();
 
     config_->TipTranslation() = tip_translation;
     config_->TipTangent() = tip_tangent;
@@ -549,7 +578,7 @@ void CRISPRobot::SetAffineToSegmentation(const Affine& affine) {
     to_segmentation_ = affine;
 }
 
-void CRISPRobot::SetKinematicStateSeed(const KinVec &v) {
+void CRISPRobot::SetKinematicStateSeed(const KinVec& v) {
     kinematics_seed_ = v;
     use_seed_ = true;
 }
@@ -582,13 +611,13 @@ void CRISPCollisionDetector::SetupSeenArray() {
     }
 }
 
-bool CRISPCollisionDetector::IsObstacle(const Vec3 &p) const{
+bool CRISPCollisionDetector::IsObstacle(const Vec3& p) const {
     IdxPoint v = env_->WorldToVoxel(p);
 
     return env_->IsObstacle(v);
 }
 
-bool CRISPCollisionDetector::Collides(const CRISPConfig &config) const {
+bool CRISPCollisionDetector::Collides(const CRISPConfig& config) const {
     auto shape = config.Shape();
 
     if (shape == nullptr) {
@@ -598,6 +627,7 @@ bool CRISPCollisionDetector::Collides(const CRISPConfig &config) const {
 
     for (Idx t = 0; t < NUM_TUBES; ++t) {
         Idx num_cylinders = shape->NumSegments(t);
+
         for (Idx c = 0; c < num_cylinders; ++c) {
             geo::Cube cube = BoundingCube(shape->ShapeSegment(t, c));
 
@@ -609,8 +639,8 @@ bool CRISPCollisionDetector::Collides(const CRISPConfig &config) const {
                     for (Idx z = min_index[2]; z < max_index[2]; ++z) {
                         IdxPoint voxel(x, y, z);
 
-                        if (env_->IsObstacle(voxel) && 
-                            InsideCylinder(env_->VoxelToWorld(voxel), shape->ShapeSegment(t, c))) {
+                        if (env_->IsObstacle(voxel) &&
+                                InsideCylinder(env_->VoxelToWorld(voxel), shape->ShapeSegment(t, c))) {
                             return true;
                         }
                     }
@@ -627,12 +657,13 @@ bool CRISPCollisionDetector::Collides(const std::shared_ptr<CRISPConfig> config)
     return Collides(*pointer);
 }
 
-std::vector<Vec3> CRISPCollisionDetector::InCollisionPoints(const CRISPConfig &config) const {
+std::vector<Vec3> CRISPCollisionDetector::InCollisionPoints(const CRISPConfig& config) const {
     std::vector<Vec3> points;
     auto shape = config.Shape();
 
     for (Idx t = 0; t < NUM_TUBES; ++t) {
         Idx num_cylinders = shape->NumSegments(t);
+
         for (Idx c = 0; c < num_cylinders; ++c) {
             geo::Cube cube = BoundingCube(shape->ShapeSegment(t, c));
 
@@ -644,8 +675,8 @@ std::vector<Vec3> CRISPCollisionDetector::InCollisionPoints(const CRISPConfig &c
                     for (Idx z = min_index[2]; z < max_index[2]; ++z) {
                         IdxPoint voxel(x, y, z);
 
-                        if (env_->IsObstacle(voxel) && 
-                            InsideCylinder(env_->VoxelToWorld(voxel), shape->ShapeSegment(t, c))) {
+                        if (env_->IsObstacle(voxel) &&
+                                InsideCylinder(env_->VoxelToWorld(voxel), shape->ShapeSegment(t, c))) {
                             points.push_back(env_->VoxelToWorld(voxel));
                         }
                     }
@@ -668,7 +699,7 @@ geo::Cube CRISPCollisionDetector::BoundingCube(const geo::Cylinder& cylinder) co
     return cube;
 }
 
-bool CRISPCollisionDetector::InsideCylinder(const Vec3 &p, const geo::Cylinder &cylinder) const {
+bool CRISPCollisionDetector::InsideCylinder(const Vec3& p, const geo::Cylinder& cylinder) const {
     Vec3 line = cylinder.p2 - cylinder.p1;
     RealNum len = line.dot(p - cylinder.p1) / line.norm();
     Vec3 projection = len*(line.normalized());
@@ -680,7 +711,8 @@ bool CRISPCollisionDetector::InsideCylinder(const Vec3 &p, const geo::Cylinder &
     return false;
 }
 
-std::vector<IdxPoint> CRISPCollisionDetector::VisiblePoints(const CRISPConfig& config, const RealNum fov_in_rad) {
+std::vector<IdxPoint> CRISPCollisionDetector::VisiblePoints(const CRISPConfig& config,
+        const RealNum fov_in_rad) {
     SetupSeenArray();
 
     std::vector<IdxPoint> points;
@@ -694,9 +726,10 @@ std::vector<IdxPoint> CRISPCollisionDetector::VisiblePoints(const CRISPConfig& c
 
             if (acos(tip_dir.dot(link_dir)) < 0.5*fov_in_rad) {
                 IdxPoint nearest_point = NearestVisiblePoint(config.TipTranslation(), link_dir);
-                if (env_->IsTarget(nearest_point) 
-                    && !seen_[nearest_point[0]][nearest_point[1]][nearest_point[2]]) {
-                    
+
+                if (env_->IsTarget(nearest_point)
+                        && !seen_[nearest_point[0]][nearest_point[1]][nearest_point[2]]) {
+
                     points.push_back(nearest_point);
                     seen_[nearest_point[0]][nearest_point[1]][nearest_point[2]] = true;
                 }
@@ -707,7 +740,8 @@ std::vector<IdxPoint> CRISPCollisionDetector::VisiblePoints(const CRISPConfig& c
     return points;
 }
 
-std::vector<Idx> CRISPCollisionDetector::VisiblePointIndices(const CRISPConfig& config, const RealNum fov_in_rad) {
+std::vector<Idx> CRISPCollisionDetector::VisiblePointIndices(const CRISPConfig& config,
+        const RealNum fov_in_rad) {
     SetupSeenArray();
 
     std::vector<Idx> points;
@@ -721,9 +755,10 @@ std::vector<Idx> CRISPCollisionDetector::VisiblePointIndices(const CRISPConfig& 
 
             if (acos(tip_dir.dot(link_dir)) < 0.5*fov_in_rad) {
                 IdxPoint nearest_point = NearestVisiblePoint(config.TipTranslation(), link_dir);
-                if (env_->IsTarget(nearest_point) 
-                    && !seen_[nearest_point[0]][nearest_point[1]][nearest_point[2]]) {
-                    
+
+                if (env_->IsTarget(nearest_point)
+                        && !seen_[nearest_point[0]][nearest_point[1]][nearest_point[2]]) {
+
                     points.push_back(env_->TargetIndex(nearest_point));
                     seen_[nearest_point[0]][nearest_point[1]][nearest_point[2]] = true;
                 }
@@ -734,17 +769,20 @@ std::vector<Idx> CRISPCollisionDetector::VisiblePointIndices(const CRISPConfig& 
     return points;
 }
 
-IdxPoint CRISPCollisionDetector::NearestVisiblePoint(const Vec3 &tip_trans, const Vec3 &unit_dir, const RealNum upper_bound) const {
+IdxPoint CRISPCollisionDetector::NearestVisiblePoint(const Vec3& tip_trans, const Vec3& unit_dir,
+        const RealNum upper_bound) const {
     RealNum min_dist = R_INF;
     Vec3 point;
     RealNum dist;
 
     // initialize p
     IdxPoint p = env_->WorldToVoxel(tip_trans);
+
     if (!env_->WithinRange(p)) {
         std::cerr << "Tip position is out of range!" << std::endl;
         exit(1);
     }
+
     Vec3 voxel_size = env_->VoxelSize();
 
     // go in x, y, z directions
@@ -775,7 +813,7 @@ IdxPoint CRISPCollisionDetector::NearestVisiblePoint(const Vec3 &tip_trans, cons
                 if (!env_->WithinRange(p_idx)) {
                     break;
                 }
-                
+
                 if (env_->IsObstacle(p_idx)) {
                     if (dist < min_dist) {
                         min_dist = dist;
@@ -793,11 +831,13 @@ IdxPoint CRISPCollisionDetector::NearestVisiblePoint(const Vec3 &tip_trans, cons
     return p;
 }
 
-void CRISPCollisionDetector::ComputeVisSetForConfiguration(const CRISPConfig& config, VisibilitySet* vis_set, const RealNum fov_in_rad) const {
+void CRISPCollisionDetector::ComputeVisSetForConfiguration(const CRISPConfig& config,
+        VisibilitySet* vis_set, const RealNum fov_in_rad) const {
     ComputeVisSetForConfiguration(config.TipTranslation(), config.TipTangent(), vis_set, fov_in_rad);
 }
 
-void CRISPCollisionDetector::ComputeVisSetForConfiguration(const Vec3& tip_trans, const Vec3& tip_tang, VisibilitySet* vis_set, const RealNum fov_in_rad) const {
+void CRISPCollisionDetector::ComputeVisSetForConfiguration(const Vec3& tip_trans,
+        const Vec3& tip_tang, VisibilitySet* vis_set, const RealNum fov_in_rad) const {
     vis_set->Clear();
 
     Vec3 unit_tang = tip_tang.normalized();

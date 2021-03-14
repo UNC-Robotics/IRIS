@@ -2,7 +2,8 @@
 
 namespace crisp {
 
-CRISPPlanner::CRISPPlanner(const RobotPtr robot, const CollisionDetectorPtr detector, const Idx seed)
+CRISPPlanner::CRISPPlanner(const RobotPtr robot, const CollisionDetectorPtr detector,
+                           const Idx seed)
     : robot_(robot), detector_(detector) {
 
     SetSeed(seed);
@@ -19,8 +20,8 @@ CRISPPlanner::CRISPPlanner(const RobotPtr robot, const CollisionDetectorPtr dete
 
     // allocator for control sampler
     space_info_->setDirectedControlSamplerAllocator(
-        [this](const oc::SpaceInformation *si) {
-            return AllocateCrispSampler(control_space_.get(), si);
+    [this](const oc::SpaceInformation *si) {
+        return AllocateCrispSampler(control_space_.get(), si);
     });
 
     using namespace std::placeholders;
@@ -37,11 +38,13 @@ CRISPPlanner::CRISPPlanner(const RobotPtr robot, const CollisionDetectorPtr dete
     // space_info_->printSettings(std::cout);
 }
 
-oc::DirectedControlSamplerPtr CRISPPlanner::AllocateCrispSampler(const oc::ControlSpace *cspace, const oc::SpaceInformation *si) {
-    return oc::DirectedControlSamplerPtr(new CrispDirectedControlSampler(robot_, detector_, cspace, si, quat_deviation_percent_, rng_));
+oc::DirectedControlSamplerPtr CRISPPlanner::AllocateCrispSampler(const oc::ControlSpace* cspace,
+        const oc::SpaceInformation* si) {
+    return oc::DirectedControlSamplerPtr(new CrispDirectedControlSampler(robot_, detector_, cspace, si,
+                                         quat_deviation_percent_, rng_));
 }
 
-bool CRISPPlanner::StateValid(const ob::State *state) {
+bool CRISPPlanner::StateValid(const ob::State* state) {
     // Do only visibility rejection here.
     const CrispStateSpace::StateType* s = state->as<CrispStateSpace::StateType>();
 
@@ -49,6 +52,7 @@ bool CRISPPlanner::StateValid(const ob::State *state) {
     bool valid = true;
 
     RealNum coverage = global_vis_set_.Size()/(RealNum)num_targets_;
+
     if (coverage > REJECT_START_COVERAGE) {
         if (RandomRealNumber(0, 1) < reject_check_ratio_) {
             VisibilitySet vis_set;
@@ -91,7 +95,8 @@ bool CRISPPlanner::StateValid(const ob::State *state) {
     return s->IsValid();
 }
 
-void CRISPPlanner::Propagate(const ob::State *state, const oc::Control *control, const RealNum time, ob::State *result) {
+void CRISPPlanner::Propagate(const ob::State* state, const oc::Control* control, const RealNum time,
+                             ob::State* result) {
     // don't need anything here
     std::cout << "Propagate function called..." << std::endl;
     exit(1);
@@ -131,19 +136,21 @@ void CRISPPlanner::SampleStartConfig(const Idx max_iter, const Idx seed) {
     Rand rng;
     rng.seed(seed);
     RealNormalDist normal(0, 1);
-    
+
     Vec3 p;
     bool find_valid_config = false;
+
     for (Idx i = 0; i < max_iter; ++i) {
         for (Idx d = 0; d < 3; d++) {
             p[d] = normal(rng);
         }
+
         p.normalize();
         p *= radius;
         p += center;
-        
-        RealNum tool_insertion = (p - p0).norm() - design->GraspLocation(); 
-        RealNum snare_insertion = (p - p1).norm(); 
+
+        RealNum tool_insertion = (p - p0).norm() - design->GraspLocation();
+        RealNum snare_insertion = (p - p1).norm();
 
         // compute quaternion for tool tube
         Mat3 tool_rot;
@@ -163,8 +170,10 @@ void CRISPPlanner::SampleStartConfig(const Idx max_iter, const Idx seed) {
 
         const auto& config = robot_->Config();
         bool in_collision = false;
+
         if (config->IsValid() && config->Stability() < kStableThreshold) {
             in_collision = detector_->Collides(config);
+
             if (!in_collision) {
                 find_valid_config = true;
                 break;
@@ -172,9 +181,9 @@ void CRISPPlanner::SampleStartConfig(const Idx max_iter, const Idx seed) {
         }
 
         std::cout << "Configuration solved: " << config->IsValid()
-            << ", stability: " << config->Stability() 
-            << ", collision: " << in_collision
-            << ", retry..." << std::endl;
+                  << ", stability: " << config->Stability()
+                  << ", collision: " << in_collision
+                  << ", retry..." << std::endl;
     }
 
     if (find_valid_config) {
@@ -193,10 +202,12 @@ void CRISPPlanner::Setup() {
         std::cerr << "No design for robot!" << std::endl;
         exit(1);
     }
+
     if (detector_ == nullptr) {
         std::cerr << "No collision detector for robot!" << std::endl;
         exit(1);
     }
+
     if (robot_->StartConfig() == nullptr) {
         std::cerr << "No start configuration!" << std::endl;
         exit(1);
@@ -204,7 +215,7 @@ void CRISPPlanner::Setup() {
 
     num_targets_ = detector_->Environment()->NumTargets();
 
-    ob::State *start = space_info_->allocState();
+    ob::State* start = space_info_->allocState();
     start->as<CrispStateSpace::StateType>()->SetState(robot_->StartConfig());
     space_info_->enforceBounds(start);
 
@@ -224,16 +235,17 @@ void CRISPPlanner::BuildAndSaveInspectionGraph(const String file_name, const Siz
     ob::PlannerData tree_data(space_info_);
     ob::PlannerData graph_data(space_info_);
 
-    Inspection::Graph *graph = new Inspection::Graph();
-    
+    Inspection::Graph* graph = new Inspection::Graph();
+
     validate_all_edges_ = true;
     SizeType incremental_step = 100;
     const TimePoint start = Clock::now();
+
     while (graph->NumVertices() < target_size) {
         BuildRRGIncrementally(graph, planner, tree_data, graph_data, incremental_step);
-        std::cout << "Time elapsed: " << RelativeTime(start)/(RealNum)1000 
-            << ", covered targets: " << graph->NumTargetsCovered() 
-            << ", " << graph->NumTargetsCovered()*(RealNum)100/num_targets_ << "%" << std::endl;
+        std::cout << "Time elapsed: " << RelativeTime(start)/(RealNum)1000
+                  << ", covered targets: " << graph->NumTargetsCovered()
+                  << ", " << graph->NumTargetsCovered()*(RealNum)100/num_targets_ << "%" << std::endl;
     }
 
     graph->Save(file_name);
@@ -241,11 +253,11 @@ void CRISPPlanner::BuildAndSaveInspectionGraph(const String file_name, const Siz
     delete graph;
 }
 
-void CRISPPlanner::BuildRRGIncrementally(Inspection::Graph *graph, 
-                            ob::PlannerPtr& planner, 
-                            ob::PlannerData& tree_data, 
-                            ob::PlannerData& graph_data, 
-                            const Idx step) {
+void CRISPPlanner::BuildRRGIncrementally(Inspection::Graph* graph,
+        ob::PlannerPtr& planner,
+        ob::PlannerData& tree_data,
+        ob::PlannerData& graph_data,
+        const Idx step) {
 
     // use ompl planner
     const TimePoint start = Clock::now();
@@ -259,6 +271,7 @@ void CRISPPlanner::BuildRRGIncrementally(Inspection::Graph *graph,
     SizeType avg_time_build = 0;
     Idx prev_size = graph->NumVertices();
     Idx current_size = tree_data.numVertices();
+
     if (current_size > prev_size) {
         avg_time_build = SizeType(total_time_build/(current_size - prev_size));
     }
@@ -287,15 +300,17 @@ void CRISPPlanner::BuildRRGIncrementally(Inspection::Graph *graph,
         // tree edges
         std::vector<unsigned> edges;
         auto num_parent = tree_data.getIncomingEdges(i, edges);
+
         if (num_parent == 1) {
             Idx p = edges[0];
             Inspection::EPtr edge(new Inspection::Edge(p, i));
             edge->checked = true;
             edge->valid = true;
-            edge->cost = space_info_->distance(tree_data.getVertex(p).getState(), tree_data.getVertex(i).getState());
+            edge->cost = space_info_->distance(tree_data.getVertex(p).getState(),
+                                               tree_data.getVertex(i).getState());
             graph->AddEdge(edge);
         }
-        else if (num_parent != 0){
+        else if (num_parent != 0) {
             std::cerr << "More than one parent! Error!" << std::endl;
             exit(1);
         }
@@ -303,10 +318,11 @@ void CRISPPlanner::BuildRRGIncrementally(Inspection::Graph *graph,
         // graph edges
         edges.clear();
         graph_data.getEdges(i, edges);
-        for (auto && e : edges) {
+
+        for (auto&& e : edges) {
             Inspection::EPtr edge(new Inspection::Edge(i, e));
-            const ob::State *source = tree_data.getVertex(i).getState();
-            const ob::State *target = tree_data.getVertex(e).getState();
+            const ob::State* source = tree_data.getVertex(i).getState();
+            const ob::State* target = tree_data.getVertex(e).getState();
             edge->cost = space_info_->distance(source, target);
 
             if (validate_all_edges_) {
@@ -327,19 +343,20 @@ SizeType CRISPPlanner::RelativeTime(const TimePoint start) const {
 }
 
 void CRISPPlanner::ComputeVisibilitySet(Inspection::VPtr vertex) const {
-    const CrispStateSpace::StateType *s = vertex->state->as<CrispStateSpace::StateType>();
+    const CrispStateSpace::StateType* s = vertex->state->as<CrispStateSpace::StateType>();
 
     detector_->ComputeVisSetForConfiguration(s->TipTranslation(), s->TipTangent(), &(vertex->vis));
 }
 
-bool CRISPPlanner::CheckEdge(const ob::State *source, const ob::State *target, const RealNum dist) const {
+bool CRISPPlanner::CheckEdge(const ob::State* source, const ob::State* target,
+                             const RealNum dist) const {
     const Idx tool_i = 0;
     const Idx snare_i = 1;
     RealNum max_time = 1.0;
     const RealNum dt = dx_/dist;
 
-    const CrispStateSpace::StateType *c_source = source->as<CrispStateSpace::StateType>();
-    const CrispStateSpace::StateType *c_dest = target->as<CrispStateSpace::StateType>();
+    const CrispStateSpace::StateType* c_source = source->as<CrispStateSpace::StateType>();
+    const CrispStateSpace::StateType* c_dest = target->as<CrispStateSpace::StateType>();
 
     // source
     Quat tool_quat_source = c_source->Quaternion(tool_i);
@@ -354,7 +371,7 @@ bool CRISPPlanner::CheckEdge(const ob::State *source, const ob::State *target, c
     Quat snare_quat_dest = c_dest->Quaternion(snare_i);
     RealNum snare_ins_dest = c_dest->Insertion(snare_i);
 
-    // 
+    //
     Quat tool_quat_mid, snare_quat_mid;
     RealNum tool_ins_mid, snare_ins_mid;
 
@@ -382,6 +399,7 @@ bool CRISPPlanner::CheckEdge(const ob::State *source, const ob::State *target, c
         robot_->ComputeShape();
 
         const auto& config = robot_->Config();
+
         if (!config->IsValid() || config->Stability() > kStableThreshold) {
             return false;
         }

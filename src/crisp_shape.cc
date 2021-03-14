@@ -24,10 +24,12 @@ void CrispShape::AddCenterPoint(const Idx tube_index, const Vec3& p) {
     points_[tube_index].push_back(p);
 }
 
-void CrispShape::AddCylinder(const Idx tube_index, const Vec3& p1, const Vec3& p2, const RealNum r) {
+void CrispShape::AddCylinder(const Idx tube_index, const Vec3& p1, const Vec3& p2,
+                             const RealNum r) {
     CheckIndex(tube_index);
 
     SizeType n = points_[tube_index].size();
+
     if (n == 0) {
         points_[tube_index].push_back(p1);
         points_[tube_index].push_back(p2);
@@ -42,6 +44,7 @@ void CrispShape::AddCylinder(const Idx tube_index, const Vec3& p1, const Vec3& p
         }
 
         points_[tube_index].push_back(p2);
+
         if (abs(r - radii_[tube_index]) > EPS) {
             std::cerr << "Tube radius changed!" << std::endl;
         }
@@ -71,6 +74,7 @@ SizeType CrispShape::NumCylinders(const Idx tube_index) const {
     CheckIndex(tube_index);
 
     SizeType n = points_[tube_index].size();
+
     if (n > 0) {
         return n - 1;
     }

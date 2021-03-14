@@ -17,7 +17,7 @@ const String kInspectionTargetsFileName = "../data/pleural_effusion/targets.txt"
 const IdxPoint kFreePoint = IdxPoint(330, 248, 260);
 
 class CTAnatomy {
-public:
+  public:
     CTAnatomy() = default;
     CTAnatomy(const String file_env);
     ~CTAnatomy();
@@ -40,12 +40,12 @@ public:
     Vec3 VoxelSize() const;
     SizeType NumTargets() const;
 
-    Vec3 VoxelToWorld(const IdxPoint &point) const;
-    IdxPoint WorldToVoxel(const Vec3 &pos, Idx dimension=0, int sign=0) const;
-    Idx CleanUpRegion(const Vec3 &center, const Idx radius);
-    bool WithinRange(const IdxPoint &p) const;
+    Vec3 VoxelToWorld(const IdxPoint& point) const;
+    IdxPoint WorldToVoxel(const Vec3& pos, Idx dimension=0, int sign=0) const;
+    Idx CleanUpRegion(const Vec3& center, const Idx radius);
+    bool WithinRange(const IdxPoint& p) const;
 
-private:
+  private:
     String file_env_;
     String file_target_points_;
     IdxPoint free_point_;
@@ -69,10 +69,10 @@ private:
     bool RemoveObstacle(const Idx x, const Idx y, const Idx z);
     bool RemoveTarget(const IdxPoint& p);
     bool RemoveTarget(const Idx x, const Idx y, const Idx z);
-    std::vector<IdxPoint> ConnectedComponent(const IdxPoint& source, BoolArray3 *mask) const;
+    std::vector<IdxPoint> ConnectedComponent(const IdxPoint& source, BoolArray3* mask) const;
     std::vector<IdxPoint> ValidNeighbors(const IdxPoint& p) const;
     void GenerateSurfacePointsAsTargets();
-    
+
 }; // CTAnatomy
 
 }

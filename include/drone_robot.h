@@ -14,7 +14,7 @@ const RealNum kMinCameraAngle = 0.0;
 const RealNum kMaxCameraAngle = 0.5 * M_PI;
 
 class DroneConfig {
-public:
+  public:
     DroneConfig() = default;
     DroneConfig(const Vec3& pos, const RealNum yaw, const RealNum camera_angle);
     DroneConfig(const std::shared_ptr<DroneConfig>& other);
@@ -30,16 +30,16 @@ public:
     bool ValidYaw(const RealNum yaw) const;
     bool ValidCameraAngle(const RealNum camera_angle) const;
 
-    void Print(std::ostream &out) const;
+    void Print(std::ostream& out) const;
 
-private:
+  private:
     Vec3 pos_;
     RealNum yaw_;
     RealNum camera_angle_;
 };
 
 class DroneRobot : public Robot {
-public:
+  public:
     DroneRobot(const RealNum height, const RealNum width, const RealNum camera_offset);
     ~DroneRobot() = default;
 
@@ -61,7 +61,7 @@ public:
     Vec3 CameraPos() const;
     Vec3 CameraTangent() const;
 
-private:
+  private:
     RealNum height_;
     RealNum width_;
     RealNum camera_offset_;  // relative to robot center

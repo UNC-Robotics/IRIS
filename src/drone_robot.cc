@@ -5,8 +5,7 @@
 namespace drone {
 
 DroneConfig::DroneConfig(const Vec3& pos, const RealNum yaw, const RealNum camera_angle) :
-    pos_(pos), yaw_(yaw), camera_angle_(camera_angle)
-{
+    pos_(pos), yaw_(yaw), camera_angle_(camera_angle) {
 
 }
 
@@ -56,17 +55,16 @@ bool DroneConfig::ValidCameraAngle(const RealNum camera_angle) const {
     return false;
 }
 
-void DroneConfig::Print(std::ostream &out) const {
+void DroneConfig::Print(std::ostream& out) const {
     out << pos_.transpose() << ", ";
     out << yaw_ << ", " << camera_angle_ << std::endl;
 }
 
 DroneRobot::DroneRobot(const RealNum height, const RealNum width, const RealNum camera_offset) :
-    height_(height), width_(width), camera_offset_(camera_offset)
-{
+    height_(height), width_(width), camera_offset_(camera_offset) {
     auto half_height = 0.5*height;
     auto half_width = 0.5*width;
-    sphere_radius_ = fmax(sqrt(half_width*half_width + half_width*half_width + half_height*half_height), 
+    sphere_radius_ = fmax(sqrt(half_width*half_width + half_width*half_width + half_height*half_height),
                           camera_offset);
 }
 
@@ -94,7 +92,8 @@ void DroneRobot::ComputeShape() {
     camera_tang_ = yaw_mat * camera_mat * Vec3::UnitX();
 }
 
-void DroneRobot::SetCameraParameters(const RealNum fov, const RealNum min_dof, const RealNum max_dof) {
+void DroneRobot::SetCameraParameters(const RealNum fov, const RealNum min_dof,
+                                     const RealNum max_dof) {
     fov_ = fov;
     min_dof_ = min_dof;
     max_dof_ = max_dof;

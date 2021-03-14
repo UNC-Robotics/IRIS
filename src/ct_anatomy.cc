@@ -3,7 +3,7 @@
 namespace crisp {
 
 CTAnatomy::CTAnatomy(const String file_env)
-: file_env_(file_env) {
+    : file_env_(file_env) {
 
     ReadEnvFile();
 }
@@ -34,6 +34,7 @@ void CTAnatomy::SetTargetPoints(const String file_target_points) {
 void CTAnatomy::ReadEnvFile() {
     std::ifstream fin;
     fin.open(file_env_);
+
     if (!fin.is_open()) {
         std::cerr << "File not opened: " << file_env_ << std::endl;
         exit(1);
@@ -47,7 +48,7 @@ void CTAnatomy::ReadEnvFile() {
     voxel_size_ << x/1000, y/1000, z/1000;
 
     std::cout << "Voxel size " << voxel_size_.transpose() << std::endl;
-    
+
     std::getline(fin, str);
     std::istringstream s2(str);
     Idx i, j, k;
@@ -69,6 +70,7 @@ void CTAnatomy::ReadEnvFile() {
 
     SizeType count = 0;
     bool occupied;
+
     for (Idx x = 0; x < i; ++x) {
         for (Idx y = 0; y < j; ++y) {
             for (Idx z = 0; z < k; ++z) {
@@ -146,7 +148,7 @@ bool CTAnatomy::RemoveTarget(const Idx x, const Idx y, const Idx z) {
     if (IsTarget(x, y, z)) {
         Idx index = TargetIndex(x, y, z);
         IdxPoint p = targets_[index];
-        
+
         if (p[0] != x || p[1] != y || p[2] != z) {
             std::cerr << "Target at index " << index << " is not (" << p.transpose() << ")" << std::endl;
             exit(1);
@@ -189,10 +191,11 @@ std::vector<IdxPoint> CTAnatomy::AllTargets() const {
 IdxPoint CTAnatomy::Target(Idx i) const {
     if (i < targets_.size()) {
         IdxPoint p = targets_[i];
+
         if (IsTarget(p)) {
             return p;
         }
-        
+
         std::cerr << "Target vector and mask are inconsistent!" << std::endl;
         exit(1);
     }
@@ -241,12 +244,14 @@ SizeType CTAnatomy::NumTargets() const {
 bool CTAnatomy::ReadTargetFile() {
     std::ifstream fin;
     fin.open(file_target_points_);
+
     if (!fin.is_open()) {
         std::cout << "File not exist: " << file_target_points_ << std::endl;
         return false;
     }
 
     String line;
+
     while(std::getline(fin, line)) {
         std::istringstream ss(line);
         Idx x, y, z;
@@ -257,13 +262,14 @@ bool CTAnatomy::ReadTargetFile() {
 
     fin.close();
     std::cout << "File read: " << file_target_points_ << std::endl;
-    
+
     return true;
 }
 
 void CTAnatomy::WriteTargetFile() const {
     std::ofstream fout;
     fout.open(file_target_points_);
+
     if (!fout.is_open()) {
         std::cerr << "File not opened: " << file_target_points_ << std::endl;
         exit(1);
@@ -271,9 +277,9 @@ void CTAnatomy::WriteTargetFile() const {
 
     for (IdxPoint p : targets_) {
         fout << p[0] << " "
-            << p[1] << " "
-            << p[2] << " "
-            << std::endl;
+             << p[1] << " "
+             << p[2] << " "
+             << std::endl;
     }
 
     fout.close();
@@ -296,6 +302,7 @@ void CTAnatomy::RemoveSmallConnectedComponents(const SizeType size) {
 
                     for (IdxPoint p : connected_component) {
                         this->RemoveObstacle(p);
+
                         if (targets_initialized_) {
                             this->RemoveTarget(p);
                         }
@@ -308,7 +315,8 @@ void CTAnatomy::RemoveSmallConnectedComponents(const SizeType size) {
     std::cout << "Removed small connected components under size " << size  << "." << std::endl;
 }
 
-std::vector<IdxPoint> CTAnatomy::ConnectedComponent(const IdxPoint &source, BoolArray3 *mask) const {
+std::vector<IdxPoint> CTAnatomy::ConnectedComponent(const IdxPoint& source,
+        BoolArray3* mask) const {
     std::vector<IdxPoint> cp;
 
     std::stack<IdxPoint> s;
@@ -320,6 +328,7 @@ std::vector<IdxPoint> CTAnatomy::ConnectedComponent(const IdxPoint &source, Bool
         cp.push_back(p);
 
         auto neighbors = ValidNeighbors(p);
+
         for (IdxPoint n : neighbors) {
             if ((*mask)[n[0]][n[1]][n[2]]) {
                 s.push(n);
@@ -331,7 +340,7 @@ std::vector<IdxPoint> CTAnatomy::ConnectedComponent(const IdxPoint &source, Bool
     return cp;
 }
 
-std::vector<IdxPoint> CTAnatomy::ValidNeighbors(const IdxPoint &p) const{
+std::vector<IdxPoint> CTAnatomy::ValidNeighbors(const IdxPoint& p) const {
     std::vector<IdxPoint> neighbors;
 
     IdxPoint neig;
@@ -358,12 +367,12 @@ std::vector<IdxPoint> CTAnatomy::ValidNeighbors(const IdxPoint &p) const{
 
     if (p[2] > 0) {
         neig << p[0], p[1], p[2] - 1;
-        neighbors.push_back(neig);  
+        neighbors.push_back(neig);
     }
 
     if (p[2] < index_range_[2] - 1) {
         neig << p[0], p[1], p[2] + 1;
-        neighbors.push_back(neig); 
+        neighbors.push_back(neig);
     }
 
     return neighbors;
@@ -396,14 +405,14 @@ void CTAnatomy::GenerateSurfacePointsAsTargets() {
     }
 }
 
-Vec3 CTAnatomy::VoxelToWorld(const IdxPoint &p) const {
+Vec3 CTAnatomy::VoxelToWorld(const IdxPoint& p) const {
     // assume (0,0,0) point in voxel space centers at world_origin_
     return Vec3(p[0]*voxel_size_[0] + world_origin_[0],
                 p[1]*voxel_size_[1] + world_origin_[1],
                 p[2]*voxel_size_[2] + world_origin_[2]);
 }
 
-IdxPoint CTAnatomy::WorldToVoxel(const Vec3 &p, Idx dimension, int sign) const{
+IdxPoint CTAnatomy::WorldToVoxel(const Vec3& p, Idx dimension, int sign) const {
     Vec3 p_tmp = p;
 
     if (sign != 0) {
@@ -419,7 +428,7 @@ IdxPoint CTAnatomy::WorldToVoxel(const Vec3 &p, Idx dimension, int sign) const{
     return p_return;
 }
 
-Idx CTAnatomy::CleanUpRegion(const Vec3 &center, const Idx radius) {
+Idx CTAnatomy::CleanUpRegion(const Vec3& center, const Idx radius) {
     Idx count = 0;
 
     IdxPoint center_voxel = WorldToVoxel(center);
@@ -438,6 +447,7 @@ Idx CTAnatomy::CleanUpRegion(const Vec3 &center, const Idx radius) {
         for (Idx y = min_bound[1]; y <= max_bound[1]; ++y) {
             for (Idx z = min_bound[2]; z <= max_bound[2]; ++z) {
                 bool is_obstacle = this->RemoveObstacle(x, y, z);
+
                 if (targets_initialized_ && IsTarget(x, y, z)) {
                     this->RemoveTarget(x, y, z);
                 }
@@ -449,14 +459,17 @@ Idx CTAnatomy::CleanUpRegion(const Vec3 &center, const Idx radius) {
         }
     }
 
-    std::cout << "Cleaned up region around " << center.transpose() << ", removed " << count << " obstacles" << std::endl;
+    std::cout << "Cleaned up region around " << center.transpose() << ", removed " << count <<
+              " obstacles" << std::endl;
+
     if (targets_initialized_) {
-        std::cout << "Remaining target points: " << targets_.size() << std::endl; 
+        std::cout << "Remaining target points: " << targets_.size() << std::endl;
     }
+
     return count;
 }
 
-bool CTAnatomy::WithinRange(const IdxPoint &p) const{
+bool CTAnatomy::WithinRange(const IdxPoint& p) const {
     for (Idx i = 0; i < 3; ++i) {
         if (p[i] < 0 || p[i] > index_range_[i] - 1) {
             return false;

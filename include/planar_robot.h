@@ -8,7 +8,7 @@
 namespace planar {
 
 class PlanarRobot : public Robot {
-public:
+  public:
     PlanarRobot(const Vec2& origin, const std::vector<RealNum>& links, const std::vector<Vec2>& bounds);
     ~PlanarRobot() = default;
 
@@ -31,7 +31,7 @@ public:
     std::vector<RealNum> StartConfig() const;
     void PrintConfig() const;
 
-private:
+  private:
     Vec2 origin_;
     Idx num_links_;
     RealNum fov_{0.0};

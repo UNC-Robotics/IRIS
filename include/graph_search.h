@@ -44,9 +44,11 @@ class GraphSearch {
 #if USE_GHOST_DATA
             const auto& size_1 = n1->GhostCoverageSize();
             const auto& size_2 = n2->GhostCoverageSize();
+
             if (size_1 != size_2) {
                 return size_1 < size_2;
             }
+
 #endif
             return n1->CoverageSize() < n2->CoverageSize();
         }
@@ -67,13 +69,15 @@ class GraphSearch {
 
 
     inline static const std::map<Idx, String> kLazinessMap = {{0, "no lazy"},
-                                                    {1, "LazySP"},
-                                                    {2, "LazyA* modified"},
-                                                    {3, "LazyA*"}};
+        {1, "LazySP"},
+        {2, "LazyA* modified"},
+        {3, "LazyA*"}
+    };
 
     inline static const std::map<Idx, String> kSuccessorMap = {{0, "direct"},
-                                                     {1, "expanded"},
-                                                     {2, "first-meet"}};
+        {1, "expanded"},
+        {2, "first-meet"}
+    };
 
   public:
     GraphSearch(const Inspection::GPtr graph);
@@ -112,10 +116,10 @@ class GraphSearch {
     RealNum greedy_cost_{0};
 
 #if USE_GHOST_DATA
-    RealNum p_{1.0};
+    RealNum p_ {1.0};
     RealNum eps_{0.0};
 #endif
-    SizeType time_build_{0};
+    SizeType time_build_ {0};
     SizeType time_vis_{0};
     SizeType time_valid_{0};
     SizeType time_search_{0};
@@ -144,7 +148,8 @@ class GraphSearch {
     void ComputeAndAddSuccessorsCompleteLazy(const NodePtr p);
     NodePtr ComputeNearestSuccessor(const NodePtr parent);
     bool InGoalSet(const NodePtr n) const;
-    bool StronglyDominates(const RealNum& l1, const VisibilitySet& s1, const RealNum& l2, const VisibilitySet& s2) const;
+    bool StronglyDominates(const RealNum& l1, const VisibilitySet& s1, const RealNum& l2,
+                           const VisibilitySet& s2) const;
     bool DominatedByClosedState(const NodePtr node) const;
     bool DominatedByOpenState(const NodePtr node);
     bool DominatedByOpenState2(const NodePtr node);
@@ -160,7 +165,8 @@ class GraphSearch {
     void ReconstructNode(const NodePtr node) const;
     void TraceFirstUnboundedNode(const NodePtr node, std::queue<NodePtr>& recycle_bin);
     void UpdateUnboundedNodes();
-    void RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycle_bin, const bool force_recycle_all=false);
+    void RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycle_bin,
+                              const bool force_recycle_all=false);
 };
 
 

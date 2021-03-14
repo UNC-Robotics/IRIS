@@ -201,10 +201,12 @@ void Node::AppendLocalPath(std::vector<Idx>* path) const {
 
 void Node::Subsume(const NodePtr other, bool skip_update) {
 #if USE_GHOST_DATA
+
     if (!skip_update) {
         this->UpdateGhostCost(other->GhostCost());
         this->ExtendGhostVisSet(other->GhostVisSet());
     }
+
 #endif
 
     other->SetSubsumed(true);
@@ -268,6 +270,7 @@ void Node::SetReuseFromClosedSet(const bool reuse) {
 
 bool Node::IsBounded(const RealNum p, const RealNum eps) const {
 #if USE_GHOST_DATA
+
     if (cost_to_come_ > (1 + eps)*ghost_cost_) {
         return false;
     }
@@ -275,8 +278,9 @@ bool Node::IsBounded(const RealNum p, const RealNum eps) const {
     if (vis_set_.Size() < p*ghost_vis_set_.Size()) {
         return false;
     }
+
 #endif
-    
+
     return true;
 }
 

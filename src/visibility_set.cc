@@ -7,7 +7,7 @@ VisibilitySet::VisibilitySet() {
 }
 
 VisibilitySet::VisibilitySet(const VisibilitySet& other)
-: bitset_(other.bitset()){}
+    : bitset_(other.bitset()) {}
 
 VisibilitySet& VisibilitySet::operator=(const VisibilitySet& other) {
     if (this != &other) {

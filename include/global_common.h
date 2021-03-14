@@ -33,18 +33,8 @@
 #define USE_HEURISTIC 0
 
 #if USE_CRISP
-#define DOWN_SAMPLING 1
-
-#if DOWN_SAMPLING
-#define MAX_COVERAGE_SIZE 4950
-#else
 #define MAX_COVERAGE_SIZE 49506 // 42039
-#endif
-
 #else
-
-#define DOWN_SAMPLING 0
-
 #if USE_PLANAR
 #define MAX_COVERAGE_SIZE 400
 #else

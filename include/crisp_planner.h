@@ -44,7 +44,7 @@ namespace oc = ompl::control;
 namespace crisp {
 
 class CRISPPlanner {
-public:
+  public:
     using RobotPtr = std::shared_ptr<CRISPRobot>;
     using CollisionDetectorPtr = std::shared_ptr<CRISPCollisionDetector>;
 
@@ -57,7 +57,7 @@ public:
     void Setup();
     void BuildAndSaveInspectionGraph(const String file_name, const SizeType target_size);
 
-private:
+  private:
     bool set_seed_{false};
     bool validate_all_edges_{false};
     Idx seed_;
@@ -80,18 +80,20 @@ private:
     ob::ProblemDefinitionPtr problem_def_;
     ob::GoalPtr goal_;
 
-    oc::DirectedControlSamplerPtr AllocateCrispSampler(const oc::ControlSpace *cspace, const oc::SpaceInformation *si);
-    bool StateValid(const ob::State *state);
-    void Propagate(const ob::State *state, const oc::Control *control, const RealNum time, ob::State *result);
+    oc::DirectedControlSamplerPtr AllocateCrispSampler(const oc::ControlSpace* cspace,
+            const oc::SpaceInformation* si);
+    bool StateValid(const ob::State* state);
+    void Propagate(const ob::State* state, const oc::Control* control, const RealNum time,
+                   ob::State* result);
 
-    void BuildRRGIncrementally(Inspection::Graph *graph, 
-                            ob::PlannerPtr& planner, 
-                            ob::PlannerData& tree_data, 
-                            ob::PlannerData& graph_data, 
-                            const Idx step);
+    void BuildRRGIncrementally(Inspection::Graph* graph,
+                               ob::PlannerPtr& planner,
+                               ob::PlannerData& tree_data,
+                               ob::PlannerData& graph_data,
+                               const Idx step);
     SizeType RelativeTime(const TimePoint start) const;
     void ComputeVisibilitySet(Inspection::VPtr vertex) const;
-    bool CheckEdge(const ob::State *source, const ob::State *target, const RealNum dist) const;
+    bool CheckEdge(const ob::State* source, const ob::State* target, const RealNum dist) const;
 
 #if REJECT_SAMPLING
     VisibilitySet global_vis_set_;

@@ -33,7 +33,7 @@ void CheckIndex(Idx i);
 Eigen::Vector4d QuatToVec(const Quat& q);
 
 class CRISPDesign {
-public:
+  public:
     CRISPDesign();
     ~CRISPDesign() = default;
 
@@ -52,7 +52,7 @@ public:
     RealNum MinInsertion(Idx i) const;
     RealNum MaxInsertion(Idx i) const;
 
-private:
+  private:
     RealNum total_len_;
     std::vector<RealNum> entry_line_lens_;
     std::vector<Vec3> entry_lines_;
@@ -64,7 +64,7 @@ private:
 };
 
 class CRISPShape {
-public:
+  public:
     CRISPShape();
     ~CRISPShape() = default;
 
@@ -74,12 +74,12 @@ public:
     Idx NumSegments(Idx tube_idx) const;
     void DeepCopy(const std::shared_ptr<CRISPShape>& other);
 
-private:
+  private:
     std::vector<std::vector<geo::Cylinder>> segments_;
 };
 
 class CRISPConfig {
-public:
+  public:
     CRISPConfig();
     ~CRISPConfig() = default;
 
@@ -99,10 +99,10 @@ public:
     bool& IsValid();
     std::shared_ptr<CRISPShape> Shape() const;
     std::shared_ptr<CRISPShape>& Shape();
-    void Print(std::ostream &out) const;
+    void Print(std::ostream& out) const;
     void DeepCopy(const std::shared_ptr<CRISPConfig>& other);
-    
-private:
+
+  private:
     std::vector<RealNum> insertions_;
     std::vector<Quat> orientations_;
     Vec3 tip_translation_;
@@ -114,7 +114,7 @@ private:
 };
 
 class CRISPRobot : public Robot {
-public:
+  public:
     CRISPRobot() = default;
     ~CRISPRobot() = default;
 
@@ -126,10 +126,10 @@ public:
     std::shared_ptr<CRISPConfig> StartConfig() const;
     void SaveStartConfig();
     void SetAffineToSegmentation(const Affine& affine);
-    void SetKinematicStateSeed(const KinVec &v);
+    void SetKinematicStateSeed(const KinVec& v);
     void UnableKinematicStateSeed();
 
-private:
+  private:
     bool initialized_{false};
     bool use_seed_{false};
     std::shared_ptr<CRISPDesign> design_{nullptr};
@@ -140,29 +140,33 @@ private:
     KinVec kinematics_seed_;
 };
 
-class CRISPCollisionDetector{
+class CRISPCollisionDetector {
     using EnvPtr = std::shared_ptr<CTAnatomy>;
-public:
+  public:
     CRISPCollisionDetector(const EnvPtr env);
     ~CRISPCollisionDetector();
 
     bool IsObstacle(const Vec3& p) const;
     bool Collides(const CRISPConfig& config) const;
     bool Collides(const std::shared_ptr<CRISPConfig> config) const;
-    std::vector<Vec3> InCollisionPoints(const CRISPConfig &config) const;
-    std::vector<IdxPoint> VisiblePoints(const CRISPConfig &config, const RealNum fov_in_rad=kSensorFOV);
-    std::vector<Idx> VisiblePointIndices(const CRISPConfig &config, const RealNum fov_in_rad=kSensorFOV);
-    void ComputeVisSetForConfiguration(const CRISPConfig& config, VisibilitySet* vis_set, const RealNum fov_in_rad=kSensorFOV) const;
-    void ComputeVisSetForConfiguration(const Vec3& tip_trans, const Vec3& tip_tang, VisibilitySet* vis_set, const RealNum fov_in_rad=kSensorFOV) const;
+    std::vector<Vec3> InCollisionPoints(const CRISPConfig& config) const;
+    std::vector<IdxPoint> VisiblePoints(const CRISPConfig& config, const RealNum fov_in_rad=kSensorFOV);
+    std::vector<Idx> VisiblePointIndices(const CRISPConfig& config,
+                                         const RealNum fov_in_rad=kSensorFOV);
+    void ComputeVisSetForConfiguration(const CRISPConfig& config, VisibilitySet* vis_set,
+                                       const RealNum fov_in_rad=kSensorFOV) const;
+    void ComputeVisSetForConfiguration(const Vec3& tip_trans, const Vec3& tip_tang,
+                                       VisibilitySet* vis_set, const RealNum fov_in_rad=kSensorFOV) const;
     EnvPtr Environment() const;
 
-private:
+  private:
     EnvPtr env_;
     BoolArray3 seen_;
     geo::Cube BoundingCube(const geo::Cylinder& cylinder) const;
     bool InsideCylinder(const Vec3& p, const geo::Cylinder& cylinder) const;
     void SetupSeenArray();
-    IdxPoint NearestVisiblePoint(const Vec3& pos, const Vec3& unit_dir, const RealNum upper_bound=1.0) const;
+    IdxPoint NearestVisiblePoint(const Vec3& pos, const Vec3& unit_dir,
+                                 const RealNum upper_bound=1.0) const;
 };
 
 }

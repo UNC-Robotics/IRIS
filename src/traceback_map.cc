@@ -35,30 +35,38 @@ void TracebackMap::Reset() {
 
 void TracebackMap::Print() const {
     std::cout << "map:" << std::endl;
+
     for (auto i = 0; i < n_; ++i) {
         for (auto j = 0; j < n_; ++j) {
             std::cout << map_[i][j] << " ";
         }
+
         std::cout << std::endl;
     }
 
     std::cout << "cost_array_: " << std::endl;
+
     for (auto i = 0; i < (n_*(n_-1))/2; ++i) {
         std::cout << cost_array_[i] << " ";
     }
+
     std::cout << std::endl;
 
     std::cout << "edge_cost_array_: " << std::endl;
+
     for (auto i = 0; i < (n_*(n_-1))/2; ++i) {
         std::cout << edge_cost_array_[i] << " ";
     }
+
     std::cout << std::endl;
 
     std::cout << "neighbors: " << std::endl;
+
     for (auto i = 0; i < n_; ++i) {
         for (auto neig : neighbors_[i]) {
             std::cout << neig << " ";
         }
+
         std::cout << std::endl;
     }
 }

@@ -80,7 +80,8 @@ class BridgeEnvironment {
     void InitializeObstaclePointCloud(const RealNum unit_area=0.2);
     RealNum TriangleArea(const RealNum a, const RealNum b, const RealNum c) const;
     RealNum RandomNum(const RealNum min, const RealNum max) const;
-    bool RayTriangleIntersect(const Vec3& org, const Vec3& dir, const Vec3& v0, const Vec3& v1, const Vec3& v2, RealNum* t, RealNum* u, RealNum* v) const;
+    bool RayTriangleIntersect(const Vec3& org, const Vec3& dir, const Vec3& v0, const Vec3& v1,
+                              const Vec3& v2, RealNum* t, RealNum* u, RealNum* v) const;
 };
 
 }

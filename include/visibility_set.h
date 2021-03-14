@@ -8,7 +8,7 @@
 class VisibilitySet {
     using Bitset = std::bitset<MAX_COVERAGE_SIZE>;
 
-public:
+  public:
     VisibilitySet();
     VisibilitySet(const VisibilitySet& other);
 
@@ -31,7 +31,7 @@ public:
     SizeType Size() const;
     const Bitset& bitset() const;
 
-private:
+  private:
     Bitset bitset_;
 
 };
