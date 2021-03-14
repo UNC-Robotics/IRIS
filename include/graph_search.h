@@ -112,8 +112,8 @@ class GraphSearch {
     RealNum greedy_cost_{0};
 
 #if USE_GHOST_DATA
-    RealNum p_ {1};
-    RealNum eps_{0};
+    RealNum p_{1.0};
+    RealNum eps_{0.0};
 #endif
     SizeType time_build_{0};
     SizeType time_vis_{0};
@@ -152,21 +152,15 @@ class GraphSearch {
     bool Dominates(const NodePtr n1, const NodePtr n2) const;
     bool ValidPath(const std::vector<Idx>& path);
     SizeType RelativeTime(const TimePoint start) const;
-
     void PrintClosedSets() const;
     void PrintOpenSets() const;
     void PrintNodeStatus(const NodePtr node, std::ostream& out=std::cout) const;
     Idx CheckOpenSets() const;
     bool CheckTermination() const;
-    void RecursivelyAddSubsumedNodesBack(const NodePtr node);
     void ReconstructNode(const NodePtr node) const;
-    void AddNodeToOpenSet(const NodePtr node, const bool skip_queue_operations);
-    void UpdateUnboundedNodes();
     void TraceFirstUnboundedNode(const NodePtr node, std::queue<NodePtr>& recycle_bin);
-    void UpdateUnboundedNodes2();
-    NodePtr SmartCheck(const NodePtr node);
+    void UpdateUnboundedNodes();
     void RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycle_bin, const bool force_recycle_all=false);
-
 };
 
 

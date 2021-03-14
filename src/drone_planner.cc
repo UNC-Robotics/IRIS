@@ -1,5 +1,7 @@
 #include "drone_planner.h"
 
+extern bool extern_validate_sample;
+
 namespace drone {
 
 DronePlanner::DronePlanner(const RobotPtr& robot, const EnvPtr& env, const Idx seed)
@@ -7,6 +9,11 @@ DronePlanner::DronePlanner(const RobotPtr& robot, const EnvPtr& env, const Idx s
 {
     rng_.seed(seed_);
     uni_ = RealUniformDist(0, 1);
+
+#if REJECT_SAMPLING
+    global_vis_set_.Clear();
+#endif
+
     // ompl::msg::setLogLevel(ompl::msg::LOG_NONE);
 }
 
@@ -20,8 +27,8 @@ void DronePlanner::SampleStartConfig(const Idx max_iter, const Idx seed) {
 
     for (auto i = 0; i < max_iter; ++i) {
         for (auto j = 0; j < 3; ++j) {
-            auto lo = env_->EnvironmentBoundary(j) - 5;
-            auto hi = env_->EnvironmentBoundary(j) + 5;
+            auto lo = (j == 2)? env_->EnvironmentBoundary(j) : env_->EnvironmentBoundary(j) - validation_distance_;
+            auto hi = env_->EnvironmentBoundary(j, false) + validation_distance_;
             pos[j] = uni(rng)*(hi - lo) + lo;
         }
 
@@ -55,13 +62,22 @@ void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx
 
     // State space.
     ompl::RNG::setSeed(seed_);
+    num_targets_ = env_->NumTargets();
     auto state_space_ = ob::StateSpacePtr(new DroneStateSpace());
 
     ob::RealVectorBounds bounds(5);
+
     for (auto i = 0; i < 3; ++i) {
-        bounds.setLow(i, env_->EnvironmentBoundary(i) - 5);
-        bounds.setHigh(i, env_->EnvironmentBoundary(i, false) + 5);
+        if (i < 2) {
+            bounds.setLow(i, env_->EnvironmentBoundary(i) - validation_distance_);
+        }
+        else {
+            bounds.setLow(i, env_->EnvironmentBoundary(i));
+        }
+        
+        bounds.setHigh(i, env_->EnvironmentBoundary(i, false) + validation_distance_);
     }
+
     bounds.setLow(3, kMinYaw);
     bounds.setHigh(3, kMaxYaw);
     bounds.setLow(4, kMinCameraAngle);
@@ -70,9 +86,9 @@ void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx
 
     // Space info.
     space_info_.reset(new ob::SpaceInformation(state_space_));
-    space_info_->setStateValidityCheckingResolution(0.01);
     using namespace std::placeholders;
     space_info_->setStateValidityChecker(std::bind(&DronePlanner::StateValid, this, _1));
+    space_info_->setStateValidityCheckingResolution(validity_res_);
     space_info_->setup();
 
     // Problem definition.
@@ -95,7 +111,6 @@ void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx
     planner->setup();
 
     // Build graph incrementally.
-    auto num_targets = env_->NumTargets();
     Inspection::Graph *graph = new Inspection::Graph();
     
     ob::PlannerData tree_data(space_info_);
@@ -104,7 +119,7 @@ void DronePlanner::BuildAndSaveInspectionGraph(const String file_name, const Idx
     while (graph->NumVertices() < target_size) {
         BuildRRGIncrementally(graph, planner, tree_data, graph_data);
         std::cout << "Covered targets: " << graph->NumTargetsCovered() 
-            << ", " << graph->NumTargetsCovered()*(RealNum)100/num_targets << "%" << std::endl;
+            << ", " << graph->NumTargetsCovered()*(RealNum)100/num_targets_ << "%" << std::endl;
     }
 
     graph->Save(file_name, true);
@@ -150,10 +165,14 @@ void DronePlanner::BuildRRGIncrementally(Inspection::Graph *graph,
         vertex->time_build = avg_time_build;
 
         graph->UpdateGlobalVisibility(vertex->vis);
+#if REJECT_SAMPLING
+        global_vis_set_.Insert(graph->GlobalVisibility());
+#endif
 
         // tree edges
         std::vector<unsigned> edges;
         auto num_parent = tree_data.getIncomingEdges(i, edges);
+
         if (num_parent == 1) {
             Idx p = edges[0];
             Inspection::EPtr edge(new Inspection::Edge(p, i));
@@ -170,6 +189,7 @@ void DronePlanner::BuildRRGIncrementally(Inspection::Graph *graph,
         // graph edges
         edges.clear();
         graph_data.getEdges(i, edges);
+
         for (auto && e : edges) {
             Inspection::EPtr edge(new Inspection::Edge(i, e));
             const ob::State *source = tree_data.getVertex(i).getState();
@@ -189,18 +209,12 @@ void DronePlanner::BuildRRGIncrementally(Inspection::Graph *graph,
     }
 }
 
-void DronePlanner::ComputeVisibilitySet(Inspection::VPtr vertex) const {
-    const auto& s = vertex->state->as<DroneStateSpace::StateType>();
-    robot_->SetConfig(s->Position(), s->Yaw(), s->CameraAngle());
-    robot_->ComputeShape();
-
-    auto visible_points = env_->GetVisiblePointIndices(robot_->CameraPos(), 
-                                                       robot_->CameraTangent(), 
-                                                       robot_->FOV(),
-                                                       robot_->MinDOF(),
-                                                       robot_->MaxDOF());
-
-    auto& vis_set = vertex->vis;
+void DronePlanner::ComputeRobotVisibilitySet(VisibilitySet& vis_set) const {
+    auto visible_points = env_->GetVisiblePointIndices(robot_->CameraPos(),
+                          robot_->CameraTangent(),
+                          robot_->FOV(),
+                          robot_->MinDOF(),
+                          robot_->MaxDOF());
     vis_set.Clear();
 
     for (auto p : visible_points) {
@@ -208,24 +222,77 @@ void DronePlanner::ComputeVisibilitySet(Inspection::VPtr vertex) const {
     }
 }
 
+void DronePlanner::ComputeVisibilitySet(Inspection::VPtr vertex) const {
+    const auto& s = vertex->state->as<DroneStateSpace::StateType>();
+    robot_->SetConfig(s->Position(), s->Yaw(), s->CameraAngle());
+    robot_->ComputeShape();
+    this->ComputeRobotVisibilitySet(vertex->vis);
+}
+
 bool DronePlanner::StateValid(const ob::State *state) {
     const auto& s = state->as<DroneStateSpace::StateType>();
 
-    if (!env_->IsCollisionFree(s->Position(), robot_->SphereRadius())) {
-         return false;
+    auto collision_free = env_->IsCollisionFree(s->Position(), robot_->SphereRadius());
+    if (!collision_free || !extern_validate_sample) {
+        return collision_free;
     }
 
-    if (RandomRealNumber(0, 1) > reject_ratio_) {
-        return true;
-    }
-    
+    extern_validate_sample = false;
     robot_->SetConfig(s->Position(), s->Yaw(), s->CameraAngle());
     robot_->ComputeShape();
 
-    return env_->IfCorrectDirection(robot_->CameraPos(),
-                                    robot_->CameraTangent(),
-                                    robot_->FOV(),
-                                    validation_distance_);
+    bool valid_direction = env_->IfCorrectDirection(robot_->CameraPos(), robot_->CameraTangent(), robot_->FOV(),
+                                 validation_distance_);
+
+    if (!valid_direction && RandomRealNumber(0, 1) < reject_ratio_) {
+        // Camera is not facing the correct direction.
+        return false;
+    }
+
+#if REJECT_SAMPLING
+    bool valid = true;
+
+    RealNum coverage = global_vis_set_.Size()/(RealNum)num_targets_;
+    if (coverage > REJECT_START_COVERAGE) {
+        if (RandomRealNumber(0, 1) < reject_check_ratio_) {
+            VisibilitySet vis_set;
+            this->ComputeRobotVisibilitySet(vis_set);
+            vis_set.Insert(global_vis_set_);
+            RealNum extend_ratio = (vis_set.Size() - global_vis_set_.Size())/(RealNum)num_targets_;
+            valid = (extend_ratio > coverage_min_extend_);
+
+            if (!valid) {
+                invalid_states_counter_++;
+            }
+            else {
+                invalid_states_counter_ = 0;
+                reject_check_ratio_ *= 1.05;
+                reject_check_ratio_ = std::fmin(reject_check_ratio_, MAX_REJECT_CHECK_RATIO);
+
+                // coverage_min_extend_ *= 1.5;
+                // coverage_min_extend_ = std::fmin(coverage_min_extend_, COVERAGE_MIN_EXTEND);
+
+                global_vis_set_.Insert(vis_set);
+            }
+        }
+
+        if (invalid_states_counter_ == REJECT_THRESHOLD) {
+            // Perform less rejection.
+            reject_check_ratio_ *= 0.95;
+            reject_check_ratio_ = std::fmax(reject_check_ratio_, MIN_REJECT_CHECK_RATIO);
+
+            // Set a lower bar for accepting a state.
+            coverage_min_extend_ *= 0.5;
+
+            // Reset counter
+            invalid_states_counter_ = 0;
+        }
+    }
+
+    return valid;
+#endif
+
+    return true;
 }
 
 bool DronePlanner::CheckEdge(const ob::State *source, const ob::State *target) const {

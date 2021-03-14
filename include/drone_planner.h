@@ -1,22 +1,9 @@
 #ifndef DRONE_PLANNER_H
 #define DRONE_PLANNER_H
 
-// #include <ompl/base/spaces/RealVectorStateSpace.h>
-// #include <ompl/base/SpaceInformation.h>
-// #include <ompl/base/StateValidityChecker.h>
-// #include <ompl/base/ScopedState.h>
-// #include <ompl/base/ProblemDefinition.h>
-// #include <ompl/base/OptimizationObjective.h>
 #include <ompl/base/Planner.h>
 #include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/terminationconditions/IterationTerminationCondition.h>
-// #include <ompl/base/PlannerStatus.h>
-// #include <ompl/base/PlannerData.h>
-// #include <ompl/base/StateStorage.h>
-// #include <ompl/control/SpaceInformation.h>
-// #include <ompl/control/spaces/RealVectorControlSpace.h>
-// #include <ompl/control/PathControl.h>
-// #include <ompl/geometric/PathGeometric.h>
 
 #include "ompl/drone_state_space.h"
 #include "ompl/infinite_goal.h"
@@ -28,6 +15,14 @@
 
 namespace ob = ompl::base;
 namespace og = ompl::geometric;
+
+#if REJECT_SAMPLING
+#define REJECT_START_COVERAGE 0.0
+#define MAX_REJECT_CHECK_RATIO 0.95
+#define MIN_REJECT_CHECK_RATIO 0.95
+#define REJECT_THRESHOLD 1000
+#define COVERAGE_MIN_EXTEND 0.00
+#endif
 
 namespace drone {
 
@@ -50,11 +45,13 @@ private:
     Rand rng_;
     RealUniformDist uni_;
     RealNum step_size_{3.0};
+    RealNum validity_res_{0.1};
     bool k_nearest_{true};
     bool validate_all_edges_{true};
     SizeType incremental_step_{100};
     RealNum reject_ratio_{1.0};
     RealNum validation_distance_{10.0};
+    SizeType num_targets_{0};
 
     ob::SpaceInformationPtr space_info_;
 
@@ -64,8 +61,16 @@ private:
     SizeType RelativeTime(const TimePoint start) const;
     std::vector<RealNum> StateToConfig(const ob::State *state) const;
     std::vector<Vec2> StateToShape(const ob::State *state) const;
+    void ComputeRobotVisibilitySet(VisibilitySet& vis_set) const;
     void ComputeVisibilitySet(Inspection::VPtr vertex) const;
     bool CheckEdge(const ob::State *source, const ob::State *target) const;
+
+#if REJECT_SAMPLING
+    VisibilitySet global_vis_set_;
+    SizeType invalid_states_counter_{0};
+    RealNum reject_check_ratio_{MAX_REJECT_CHECK_RATIO};
+    RealNum coverage_min_extend_{COVERAGE_MIN_EXTEND};
+#endif
 };
 
 }

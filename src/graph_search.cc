@@ -253,7 +253,7 @@ void GraphSearch::InitDataStructures() {
     closed_sets_.resize(virtual_graph_size_);
 
 #if USE_NODE_REUSE
-    this->UpdateUnboundedNodes2();
+    this->UpdateUnboundedNodes();
 #else
     for (SizeType i = 0; i < virtual_graph_size_; ++i) {
         open_sets_[i].clear();
@@ -1399,92 +1399,10 @@ SizeType GraphSearch::VirtualGraphNumEdges() const {
     return virtual_graph_num_edges_;
 }
 
-void GraphSearch::RecursivelyAddSubsumedNodesBack(const NodePtr node) {
-    if (node->Parent()->ReusedFromClosedSet()) {
-        // reconstruct current node from its parent.
-        this->ReconstructNode(node);
-        this->AddNode(node, true);
-    }
-
-    std::vector<NodePtr> tmp_history = node->SubsumedNodes();
-    node->ClearSubsumeHistory();
-    for (auto n : tmp_history) {
-        n->SetSubsumed(false);
-        if (n->IsBounded(p_, eps_)) {
-            this->AddNode(n, true);
-        }
-        else {
-            RecursivelyAddSubsumedNodesBack(n);
-        }
-    }
-}
-
 void GraphSearch::ReconstructNode(const NodePtr node) const {
     auto idx = node->Index();
     node->CopyAsChild(node->Parent());
     node->Extend(idx, node->LocalPathCost(), graph_->Vertex(idx)->vis);
-}
-
-void GraphSearch::AddNodeToOpenSet(const NodePtr node, const bool skip_queue_operations) {
-    if (DominatedByClosedState(node)) {
-        return;
-    }
-
-    if (DominatedByOpenStateCompleteLazy(node, skip_queue_operations)) {
-        return;
-    }
-
-    open_sets_[node->Index()].insert(node);
-
-    if (!skip_queue_operations) {
-        queue_->push(node);
-    }
-}
-
-void GraphSearch::UpdateUnboundedNodes() {
-    std::vector<std::vector<NodePtr>> recycle_bins(virtual_graph_size_);
-    for (SizeType i = 0; i < virtual_graph_size_; ++i) {
-        auto& recycle_bin = recycle_bins[i];
-        auto& closed_set = closed_sets_[i];
-        for (auto it = closed_set.begin(); it != closed_set.end();) {
-            auto node = *it;
-            if (!node->IsBounded(p_, eps_)) {
-                node->SetReuseFromClosedSet(false);
-                recycle_bin.push_back(node);
-                closed_set.erase(it++);
-                continue;
-            }
-
-            node->SetReuseFromClosedSet(true);
-            queue_->push(node);
-            ++it;
-        }
-
-        auto& open_set = open_sets_[i];
-        for (auto it = open_set.begin(); it != open_set.end();) {
-            auto node = *it;
-            if (!node->IsBounded(p_, eps_)) {
-                recycle_bin.push_back(node);
-                open_set.erase(it++);
-                continue;
-            }
-
-            ++it;
-        }
-    }
-
-    for (auto recycle_bin : recycle_bins) {
-        for (auto node : recycle_bin) {
-            this->RecursivelyAddSubsumedNodesBack(node);
-        }
-    }
-
-    for (SizeType i = 0; i < virtual_graph_size_; ++i) {
-        auto& open_set = open_sets_[i];
-        for (auto node : open_set) {
-            queue_->push(node);
-        }
-    }
 }
 
 void GraphSearch::TraceFirstUnboundedNode(const NodePtr node, std::queue<NodePtr>& recycle_bin) {
@@ -1567,7 +1485,7 @@ void GraphSearch::RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycl
     }
 }
 
-void GraphSearch::UpdateUnboundedNodes2() {
+void GraphSearch::UpdateUnboundedNodes() {
     std::queue<NodePtr> recycle_bin;
 
     // Parse closed set.
@@ -1686,28 +1604,4 @@ void GraphSearch::UpdateUnboundedNodes2() {
     }
 
     std::cout << "\rUpdated queue" << std::flush;
-}
-
-NodePtr GraphSearch::SmartCheck(const NodePtr node) {
-    if (node == nullptr) {
-        return nullptr;
-    }
-
-    if (!node->IsChecked()) {
-        bool local_path_valid = ValidPath(node->LocalPath());
-        node->SetChecked(true);
-        node->SetValid(local_path_valid);
-
-        if (!local_path_valid) {
-            open_sets_[node->Index()].erase(node);
-            for (auto subsumed : node->SubsumedNodes()) {
-                subsumed->SetSubsumed(false);
-                AddNode(subsumed, false);
-            }
-
-            return nullptr;
-        }
-    }
-
-    return node;
 }

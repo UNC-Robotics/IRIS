@@ -33,6 +33,14 @@
 namespace ob = ompl::base;
 namespace oc = ompl::control;
 
+#if REJECT_SAMPLING
+#define REJECT_START_COVERAGE 0.0
+#define MAX_REJECT_CHECK_RATIO 0.9
+#define MIN_REJECT_CHECK_RATIO 0.9
+#define REJECT_THRESHOLD 100
+#define COVERAGE_MIN_EXTEND 0.000
+#endif
+
 namespace crisp {
 
 class CRISPPlanner {
@@ -84,6 +92,14 @@ private:
     SizeType RelativeTime(const TimePoint start) const;
     void ComputeVisibilitySet(Inspection::VPtr vertex) const;
     bool CheckEdge(const ob::State *source, const ob::State *target, const RealNum dist) const;
+
+#if REJECT_SAMPLING
+    VisibilitySet global_vis_set_;
+    SizeType invalid_states_counter_{0};
+    RealNum reject_check_ratio_{MAX_REJECT_CHECK_RATIO};
+    RealNum coverage_min_extend_{COVERAGE_MIN_EXTEND};
+#endif
+
 };
 
 }

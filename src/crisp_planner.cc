@@ -7,6 +7,10 @@ CRISPPlanner::CRISPPlanner(const RobotPtr robot, const CollisionDetectorPtr dete
 
     SetSeed(seed);
 
+#if REJECT_SAMPLING
+    global_vis_set_.Clear();
+#endif
+
     // ompl
     state_space_.reset(new CrispStateSpace(NUM_TUBES));
     control_space_.reset(new CrispControlSpace(state_space_));
@@ -38,8 +42,53 @@ oc::DirectedControlSamplerPtr CRISPPlanner::AllocateCrispSampler(const oc::Contr
 }
 
 bool CRISPPlanner::StateValid(const ob::State *state) {
-    // valid iff kinematics is solved and 
-    return state->as<CrispStateSpace::StateType>()->IsValid();
+    // Do only visibility rejection here.
+    const CrispStateSpace::StateType* s = state->as<CrispStateSpace::StateType>();
+
+#if REJECT_SAMPLING
+    bool valid = true;
+
+    RealNum coverage = global_vis_set_.Size()/(RealNum)num_targets_;
+    if (coverage > REJECT_START_COVERAGE) {
+        if (RandomRealNumber(0, 1) < reject_check_ratio_) {
+            VisibilitySet vis_set;
+            detector_->ComputeVisSetForConfiguration(s->TipTranslation(), s->TipTangent(), &vis_set);
+            vis_set.Insert(global_vis_set_);
+            RealNum extend_ratio = (vis_set.Size() - global_vis_set_.Size())/(RealNum)num_targets_;
+            valid = (extend_ratio > coverage_min_extend_);
+
+            if (!valid) {
+                invalid_states_counter_++;
+            }
+            else {
+                invalid_states_counter_ = 0;
+                reject_check_ratio_ *= 1.05;
+                reject_check_ratio_ = std::fmin(reject_check_ratio_, MAX_REJECT_CHECK_RATIO);
+
+                // coverage_min_extend_ *= 1.5;
+                // coverage_min_extend_ = std::fmin(coverage_min_extend_, COVERAGE_MIN_EXTEND);
+
+                global_vis_set_.Insert(vis_set);
+            }
+        }
+
+        if (invalid_states_counter_ == REJECT_THRESHOLD) {
+            // Perform less rejection.
+            reject_check_ratio_ *= 0.95;
+            reject_check_ratio_ = std::fmax(reject_check_ratio_, MIN_REJECT_CHECK_RATIO);
+
+            // Set a lower bar for accepting a state.
+            coverage_min_extend_ *= 0.5;
+
+            // Reset counter
+            invalid_states_counter_ = 0;
+        }
+    }
+
+    return valid;
+#endif
+
+    return s->IsValid();
 }
 
 void CRISPPlanner::Propagate(const ob::State *state, const oc::Control *control, const RealNum time, ob::State *result) {
@@ -231,6 +280,9 @@ void CRISPPlanner::BuildRRGIncrementally(Inspection::Graph *graph,
         vertex->time_build = avg_time_build;
 
         graph->UpdateGlobalVisibility(vertex->vis);
+#if REJECT_SAMPLING
+        global_vis_set_.Insert(graph->GlobalVisibility());
+#endif
 
         // tree edges
         std::vector<unsigned> edges;
