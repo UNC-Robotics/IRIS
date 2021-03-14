@@ -64,6 +64,7 @@ endif()
 
 if(OMPL_INCLUDE_DIRS AND OMPL_LIBRARIES)
     include_directories(${OMPL_INCLUDE_DIRS})
+    include_directories("${OMPL_INCLUDE_DIRS}/ompl-1.5")
   	message("OMPL found.")
     message("OMPL include dirs: ${OMPL_INCLUDE_DIRS}")
     message("OMPL libraries: ${OMPL_LIBRARIES}")

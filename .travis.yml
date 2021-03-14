@@ -51,7 +51,7 @@ matrix:
         - eigen
         - flann
         - ninja
-        - ompl
+        # - ompl
         update: true
 
 before_install:
@@ -59,8 +59,9 @@ before_install:
   - eval "${MATRIX_EVAL}"
 script:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then
-      git clone --branch=1.4.2 https://github.com/ompl/ompl.git ./external/ompl &&
+      git clone https://github.com/ompl/ompl.git ./external/ompl &&
       cd external/ompl &&
+      git checkout 1.5.0 &&
       mkdir -p build &&
       mkdir -p install &&
       cd build &&
@@ -70,8 +71,21 @@ script:
       cd ../../.. &&
       mkdir -p build &&
       cd build &&
-      CC=gcc-7 CXX=g++-7 cmake -DOMPL_INCLUDE_DIRS=./external/ompl/install/include -DOMPL_LIBRARIES=/home/travis/build/mengyu-fu/iris/external/ompl/install/lib/libompl.so ..&&
+      CC=gcc-7 CXX=g++-7 cmake -DOMPL_INCLUDE_DIRS=./external/ompl/install/include -DOMPL_LIBRARIES=/home/travis/build/mengyu-fu/iris/external/ompl/install/lib/libompl.so .. &&
       make;
     else
-      mkdir -p build && cd build && cmake .. && make;
+      git clone https://github.com/ompl/ompl.git ./external/ompl &&
+      cd external/ompl &&
+      git checkout 1.5.0 &&
+      mkdir -p build &&
+      mkdir -p install &&
+      cd build &&
+      cmake -DCMAKE_INSTALL_PREFIX=../install .. &&
+      make &&
+      make install &&
+      cd ../../.. &&
+      mkdir -p build &&
+      cd build &&
+      cmake -DOMPL_INCLUDE_DIRS=./external/ompl/install/include -DOMPL_LIBRARIES=/home/travis/build/mengyu-fu/iris/external/ompl/install/lib/libompl.dylib .. &&
+      make;
     fi

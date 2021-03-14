@@ -18,7 +18,7 @@
 #include <ompl/control/ControlSpace.h>
 #include <ompl/control/PathControl.h>
 #include <ompl/util/Console.h>
-#include <ompl/base/PlannerTerminationCondition.h>
+#include <ompl/base/terminationconditions/IterationTerminationCondition.h>
 
 #include "crisp_robot.h"
 #include "inspection_graph.h"

@@ -7,8 +7,9 @@
 // #include <ompl/base/ScopedState.h>
 // #include <ompl/base/ProblemDefinition.h>
 // #include <ompl/base/OptimizationObjective.h>
-#include <ompl/base/objectives/PathLengthOptimizationObjective.h>
 #include <ompl/base/Planner.h>
+#include <ompl/base/objectives/PathLengthOptimizationObjective.h>
+#include <ompl/base/terminationconditions/IterationTerminationCondition.h>
 // #include <ompl/base/PlannerStatus.h>
 // #include <ompl/base/PlannerData.h>
 // #include <ompl/base/StateStorage.h>

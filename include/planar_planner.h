@@ -12,6 +12,7 @@
 #include <ompl/base/PlannerStatus.h>
 #include <ompl/base/PlannerData.h>
 #include <ompl/base/StateStorage.h>
+#include <ompl/base/terminationconditions/IterationTerminationCondition.h>
 #include <ompl/control/SpaceInformation.h>
 #include <ompl/control/spaces/RealVectorControlSpace.h>
 #include <ompl/control/PathControl.h>

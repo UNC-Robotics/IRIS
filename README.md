@@ -7,10 +7,10 @@ This is code for paper [Toward Asymptotically-Optimal Inspection Planning via Ef
 ### Requirements
 
 * [GCC(for Linux)](https://gcc.gnu.org/) - v7.4
-* [Boost](https://www.boost.org/) - v1.65.0
+* [Boost](https://www.boost.org/) - v1.68.0
 * [CMake](https://cmake.org/) - v3.8
 * [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) - v3.3.4
-* [OMPL](https://ompl.kavrakilab.org/) - the Open Motion Planning Library v1.3.2
+* [OMPL](https://ompl.kavrakilab.org/) - the Open Motion Planning Library v1.5.0
 
 ## Installation
 
