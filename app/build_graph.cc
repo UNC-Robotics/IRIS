@@ -18,6 +18,7 @@
 
 int main(int argc, char** argv) {
 #if USE_CRISP
+
     // CRISP robot.
     if (argc < 4) {
         std::cerr << "Usage:" << argv[0] << " seed num_vertex file_to_write" << std::endl;
@@ -54,6 +55,7 @@ int main(int argc, char** argv) {
 #else
 
 #if USE_PLANAR
+
     // Planar robot.
     if (argc < 4) {
         std::cerr << "Usage:" << argv[0] << " seed num_vertex file_to_write [num_obstacles]" << std::endl;
@@ -65,7 +67,7 @@ int main(int argc, char** argv) {
     SizeType num_vertex = std::stoi(argv[2]);
     String file_to_write = argv[3];
     Idx num_obstacles = 10;
-    
+
     if (argc > 4) {
         num_obstacles = std::stoi(argv[4]);
     }
@@ -75,6 +77,7 @@ int main(int argc, char** argv) {
     unsigned num_links = 5;
     std::vector<RealNum> link_length{0.2, 0.1, 0.2, 0.3, 0.1};
     std::vector<Vec2> bounds(num_links, Vec2(-M_PI, M_PI));
+    bounds[0] = Vec2(0, M_PI);
     RealNum fov = M_PI/2;
 
     auto robot = std::make_shared<planar::PlanarRobot>(origin, link_length, bounds);
@@ -83,7 +86,7 @@ int main(int argc, char** argv) {
 
     // Environment setup.
     auto env = std::make_shared<planar::PlanarEnvironment>(2.0, 2.0, 100, seed);
-    env->RandomObstacles(num_obstacles, 0.2);
+    env->RandomObstacles(num_obstacles, 0.3, 0.1, origin);
 
     // Planner.
     auto planner = std::make_shared<planar::PlanarPlanner>(robot, env, seed);
@@ -93,6 +96,7 @@ int main(int argc, char** argv) {
     planner->BuildAndSaveInspectionGraph(file_to_write, num_vertex);
 
 #else
+
     // Drone robot.
     if (argc < 4) {
         std::cerr << "Usage:" << argv[0] << " seed num_vertex file_to_write" << std::endl;

@@ -1,29 +1,35 @@
 #include <iostream>
 #include <cmath>
+#include <ctime>
 
 #include "graph_search.h"
 
 int main(int argc, char** argv) {
-    if (argc < 7) {
-        std::cerr << "Usage: " << argv[0] << " file_to_read initial_p initial_eps tightening_rate method file_to_write" << std::endl;
+    if (argc < 9) {
+        std::cerr << "Usage: " << argv[0] <<
+                  " file_to_read initial_p initial_eps tightening_rate laziness_mode successor_mode batching_ratio file_to_write"
+                  << std::endl;
         exit(1);
     }
+
+#if USE_NODE_REUSE
+    std::cout << "Node reuse enabled!" << std::endl;
+#endif
 
     // parse input
     String file_to_read = argv[1];
     const RealNum initial_p = std::stof(argv[2]);
     const RealNum initial_eps = std::stof(argv[3]);
     RealNum tightening_rate = std::stof(argv[4]);
-    // 0 -- no lazy
-    // 1 -- lazy A*
-    // 2 -- complete lazy
-    Idx method = std::stoi(argv[5]);
-    String file_to_write = argv[6];
-    
+    Idx laziness_mode = std::stoi(argv[5]);
+    Idx successor_mode = std::stoi(argv[6]);
+    RealNum ratio = std::stof(argv[7]);
+    std::cout << "ratio:" << ratio << std::endl;
+    String file_to_write = argv[8];
 
     Inspection::GPtr graph(new Inspection::Graph);
-    graph->ReadFromFiles(file_to_read, false);
-    // graph->ReadFromFiles(file_to_read, true, 5);
+    graph->ReadFromFiles(file_to_read, true, false);
+    // graph->ReadFromFiles(file_to_read);
 
     GraphSearch search(graph);
 
@@ -31,45 +37,56 @@ int main(int argc, char** argv) {
     RealNum eps = initial_eps;
     SizeType step = 1;
     SizeType addtional = 0;
-
     std::ofstream fout;
     fout.open(file_to_write);
+
+    std::ofstream fout_result;
+    fout_result.open(file_to_write + "_result");
+
     if (!fout.is_open()) {
         std::cerr << file_to_write << " cannot be opened!" << std::endl;
         exit(1);
     }
-
-    std::ofstream fout_result;
-    fout_result.open(file_to_write + "_result");
 
     if (!fout_result.is_open()) {
         std::cerr << file_to_write + "_result" << " cannot be opened!" << std::endl;
         exit(1);
     }
 
+    search.SetLazinessMode(laziness_mode);
+    search.SetSuccessorMode(successor_mode);
+    search.SetSourceIndex(0);
     search.PrintTitle(std::cout);
+
     std::vector<Idx> path;
+
     for (SizeType graph_size = step; graph_size <= graph->NumVertices(); graph_size += step) {
-        search.ExpandVirtualGraph(graph_size, method > 0);
+        search.ExpandVirtualGraph(graph_size);
         addtional += step;
 
         auto update_rate = tightening_rate;
         //auto update_rate = pow(tightening_rate, sqrt(graph_size));
-        p += (1 - p)*update_rate;
-        eps += (0 - eps)*update_rate;
 
-        if (search.ResultCoverageSize() / (RealNum)search.VirtualGraphCoverageSize() > p
-            && addtional < 500) {
+        for (auto i = 0; i < step; ++i) {
+            p += (1 - p)*update_rate;
+            eps += (0 - eps)*update_rate;
+        }
+
+        if (search.ResultCoverageSize() / (RealNum)search.VirtualGraphCoverageSize() >= ratio * p
+                && addtional < 200) {
             continue;
         }
 
-        if (method == 1) {
-            path = search.SearchVirtualGraph(p, eps);
-        }
-        else {
-            path = search.SearchVirtualGraphCompleteLazy(p, eps);
-        }
-        
+        search.UpdateApproximationParameters(eps, p);
+
+        std::cout << "Graph size: " << graph_size << std::flush;
+        path = search.SearchVirtualGraph();
+        std::cout << "\r                                 " << std::flush;
+
+        auto current = std::chrono::system_clock::now();
+        std::time_t current_time = std::chrono::system_clock::to_time_t(current);
+        std::cout << "\r" << std::ctime(&current_time);
+
         search.PrintResult(std::cout);
         search.PrintResult(fout);
 

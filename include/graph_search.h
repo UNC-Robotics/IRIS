@@ -26,46 +26,93 @@ class GraphSearch {
 #endif
         return KeyBase(n);
     }
-    
-    struct Cmp {
+
+    struct QueueCmp {
+        // This is greater operator.
+        // If false is returned, n1 comes before n2; if true is returned, n2 comes before n1.
         bool operator() (const NodePtr n1, const NodePtr n2) const {
-            // smaller key comes first
             return Key(n1) > Key(n2);
+
+            // smaller key comes first
+            const auto& key_1 = Key(n1);
+            const auto& key_2 = Key(n2);
+
+            if (std::fabs(key_1 - key_2) > EPS) {
+                return key_1 > key_2;
+            }
+
+#if USE_GHOST_DATA
+            const auto& size_1 = n1->GhostCoverageSize();
+            const auto& size_2 = n2->GhostCoverageSize();
+            if (size_1 != size_2) {
+                return size_1 < size_2;
+            }
+#endif
+            return n1->CoverageSize() < n2->CoverageSize();
         }
     };
-    
+
     struct CoverageCmp {
         bool operator() (const NodePtr n1, const NodePtr n2) const {
             // larger coverage comes first
             return n1->CoverageSize() < n2->CoverageSize();
         }
     };
-    
-    using PriorityQueue = std::priority_queue<NodePtr, std::vector<NodePtr>, Cmp>;
+
+    using PriorityQueue = std::priority_queue<NodePtr, std::vector<NodePtr>, QueueCmp>;
+    // using OpenSet = std::set<NodePtr, CoverageCmp>;
     using OpenSet = std::unordered_set<NodePtr>;
-    using ClosedSet = std::set<NodePtr, CoverageCmp>;
-public:
-    GraphSearch(Inspection::GPtr graph);
-    
-    SizeType ExpandVirtualGraph(SizeType new_size, bool lazy_computation=true);
-    std::vector<Idx> SearchVirtualGraphCompleteLazy(const RealNum p=1.0, const RealNum eps=0.0);
-    std::vector<Idx> SearchVirtualGraph(const RealNum p=1.0, const RealNum eps=0.0);
+    // using ClosedSet = std::set<NodePtr, CoverageCmp>;
+    using ClosedSet = std::unordered_set<NodePtr>;
+
+
+    inline static const std::map<Idx, String> kLazinessMap = {{0, "no lazy"},
+                                                    {1, "LazySP"},
+                                                    {2, "LazyA* modified"},
+                                                    {3, "LazyA*"}};
+
+    inline static const std::map<Idx, String> kSuccessorMap = {{0, "direct"},
+                                                     {1, "expanded"},
+                                                     {2, "first-meet"}};
+
+  public:
+    GraphSearch(const Inspection::GPtr graph);
+
+    void SetLazinessMode(const Idx mode_id);
+    void SetSuccessorMode(const Idx mode_id);
+    void SetSourceIndex(const Idx source);
+    void UpdateApproximationParameters(const RealNum eps, const RealNum p);
+
+    SizeType ExpandVirtualGraph(SizeType new_size);
+    std::vector<Idx> SearchVirtualGraph();
+    void InitDataStructures();
+    NodePtr PopFromPriorityQueue();
+    void Extend(NodePtr n);
+    bool AddNode(NodePtr n, const bool skip_queue_operations=false);
+    void RecursivelyAddNode(NodePtr n, const bool skip_queue_operations=false);
+    bool SubsumedByOpenState(NodePtr node, const bool skip_queue_operations);
+    bool Valid(NodePtr n);
+    void GreedySearchForFullCoverage();
     SizeType VirtualGraphCoverageSize() const;
+    const VisibilitySet& VirtualGraphCoverage() const;
     SizeType ResultCoverageSize() const;
     RealNum ResultCost() const;
-    void PrintResult(std::ostream &out) const;
-    void PrintTitle(std::ostream &out) const;
+    void PrintResult(std::ostream& out) const;
+    void PrintTitle(std::ostream& out) const;
     SizeType TotalTime() const;
     void SetMaxTimeAllowed(const SizeType& time);
+    SizeType VirtualGraphNumEdges() const;
 
-private:
-    Inspection::GPtr graph_;
+  private:
+    Inspection::GPtr graph_{nullptr};
     SizeType virtual_graph_size_{0};
+    SizeType prev_graph_size_{0};
     VisibilitySet virtual_graph_coverage_;
     NodePtr result_{nullptr};
+    RealNum greedy_cost_{0};
 
 #if USE_GHOST_DATA
-    RealNum p_{1};
+    RealNum p_ {1};
     RealNum eps_{0};
 #endif
     SizeType time_build_{0};
@@ -73,31 +120,52 @@ private:
     SizeType time_valid_{0};
     SizeType time_search_{0};
     SizeType num_validated_{0};
+    SizeType virtual_graph_num_edges_{0};
     SizeType max_time_allowed_{10000000};
-    std::shared_ptr<TracebackMap> map_;
+    SizeType num_nodes_extended_{0};
+    SizeType num_nodes_generated_{0};
+    SizeType num_nodes_remained_{0};
+    std::shared_ptr<TracebackMap> map_{nullptr};
 
-    std::shared_ptr<PriorityQueue> queue_;
+    std::shared_ptr<PriorityQueue> queue_{nullptr};
     std::vector<OpenSet> open_sets_;
     std::vector<ClosedSet> closed_sets_;
+
+    Idx successor_mode_{0};
+    Idx laziness_mode_{0};
+    Idx source_idx_{0};
+    Idx search_id_{0};
 
     NodePtr PopFromQueue();
     NodePtr PopFromQueueCompleteLazy();
     bool IsUpToDate(const NodePtr p) const;
+    bool NewNodesInvolved(const NodePtr parent, const std::vector<Idx>& successor) const;
     void ComputeAndAddSuccessors(const NodePtr p);
     void ComputeAndAddSuccessorsCompleteLazy(const NodePtr p);
+    NodePtr ComputeNearestSuccessor(const NodePtr parent);
     bool InGoalSet(const NodePtr n) const;
     bool StronglyDominates(const RealNum& l1, const VisibilitySet& s1, const RealNum& l2, const VisibilitySet& s2) const;
     bool DominatedByClosedState(const NodePtr node) const;
-    bool DominatedByOpenState(NodePtr& node);
-    bool DominatedByOpenStateCompleteLazy(NodePtr& node);
+    bool DominatedByOpenState(const NodePtr node);
+    bool DominatedByOpenState2(const NodePtr node);
+    bool DominatedByOpenStateCompleteLazy(const NodePtr node, const bool skip_queue_operations=false);
     bool Dominates(const NodePtr n1, const NodePtr n2) const;
     bool ValidPath(const std::vector<Idx>& path);
     SizeType RelativeTime(const TimePoint start) const;
 
+    void PrintClosedSets() const;
     void PrintOpenSets() const;
-    void PrintNodeStatus(const NodePtr node) const;
+    void PrintNodeStatus(const NodePtr node, std::ostream& out=std::cout) const;
     Idx CheckOpenSets() const;
     bool CheckTermination() const;
+    void RecursivelyAddSubsumedNodesBack(const NodePtr node);
+    void ReconstructNode(const NodePtr node) const;
+    void AddNodeToOpenSet(const NodePtr node, const bool skip_queue_operations);
+    void UpdateUnboundedNodes();
+    void TraceFirstUnboundedNode(const NodePtr node, std::queue<NodePtr>& recycle_bin);
+    void UpdateUnboundedNodes2();
+    NodePtr SmartCheck(const NodePtr node);
+    void RecycleSubsumedNodes(NodePtr node, std::queue<NodePtr>& recycle_bin, const bool force_recycle_all=false);
 
 };
 

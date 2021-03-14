@@ -13,6 +13,12 @@
 
 #define DEBUG_MODE 0
 
+#define REJECT_SAMPLING 1
+
+#define USE_NODE_REUSE 1
+#define KEEP_SUBSUMING_HISTORY 1
+#define SAVE_PREDECESSOR 1
+
 #define USE_CRISP 1
 #define USE_PLANAR 0
 
@@ -27,13 +33,22 @@
 #define USE_HEURISTIC 0
 
 #if USE_CRISP
-#define MAX_COVERAGE_SIZE 49506
+#define DOWN_SAMPLING 1
+
+#if DOWN_SAMPLING
+#define MAX_COVERAGE_SIZE 4950
 #else
+#define MAX_COVERAGE_SIZE 49506 // 42039
+#endif
+
+#else
+
+#define DOWN_SAMPLING 0
 
 #if USE_PLANAR
 #define MAX_COVERAGE_SIZE 400
 #else
-#define MAX_COVERAGE_SIZE 3817 // 14021
+#define MAX_COVERAGE_SIZE 3817 // 14021 // 27384 // 3346
 #endif // USE_PLANAR
 
 #endif // USE_CRISP
@@ -59,7 +74,7 @@ using RealNormalDist = std::normal_distribution<RealNum>;
 using IntUniformDist = std::uniform_int_distribution<Idx>;
 
 // Eigen alias
-using IdxPoint = Eigen::Matrix<Idx, 3, 1, Eigen::ColMajor>; 
+using IdxPoint = Eigen::Matrix<Idx, 3, 1, Eigen::ColMajor>;
 using Vec2 = Eigen::Matrix<RealNum, 2, 1, Eigen::ColMajor>;
 using Vec3 = Eigen::Matrix<RealNum, 3, 1, Eigen::ColMajor>;
 using Vec4 = Eigen::Matrix<RealNum, 4, 1, Eigen::ColMajor>;
