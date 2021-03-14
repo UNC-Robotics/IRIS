@@ -96,7 +96,6 @@ class GraphSearch {
     void RecursivelyAddNode(NodePtr n, const bool skip_queue_operations=false);
     bool SubsumedByOpenState(NodePtr node, const bool skip_queue_operations);
     bool Valid(NodePtr n);
-    void GreedySearchForFullCoverage();
     SizeType VirtualGraphCoverageSize() const;
     const VisibilitySet& VirtualGraphCoverage() const;
     SizeType ResultCoverageSize() const;

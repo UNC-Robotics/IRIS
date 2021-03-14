@@ -53,8 +53,20 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    // Lazyiness:
+    // 0 -- No lazy
+    // 1 -- Lazy SP
+    // 2 -- Lazy A* modified (validate when subsuming for the first time)
+    // 3 -- Lazy A* (validate only when popped from OPEN list, performance worse than 2, keep for reference)
     search.SetLazinessMode(laziness_mode);
+
+    // Successor mode:
+    // 0 -- Direct neighboring successors on the roadmap (default)
+    // 1 -- First neighbor that increases inspection coverage
+    // 2 -- first neighbor that increases inspection coverage and
+    //      there's no other node increasing the coverage along the shortest path from its parent
     search.SetSuccessorMode(successor_mode);
+
     search.SetSourceIndex(0);
     search.PrintTitle(std::cout);
 

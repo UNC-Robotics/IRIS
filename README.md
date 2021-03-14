@@ -1,6 +1,12 @@
 # IRIS (Incremental Random Inspection-roadmap Search)
 
-Linux / macOS [![Build Status](https://travis-ci.com/mengyu-fu/iris.svg?token=XPQsbGm4wg5EAgVzsSUR&branch=master)](https://travis-ci.com/mengyu-fu/iris)
+<!-- Linux / macOS [![Build Status](https://travis-ci.com/mengyu-fu/iris.svg?token=XPQsbGm4wg5EAgVzsSUR&branch=master)](https://travis-ci.com/mengyu-fu/iris) -->
+
+**Update:**
+
+The code on this branch is updated to reflect the changes in *Computationally-Efficient Roadmap-based Inspection Planning via Incremental Lazy  Search (ICRA 2021)*.
+Please note the usage of ```search_graph``` is changed, read the following instructions for details.
+
 
 This is code for paper [Toward Asymptotically-Optimal Inspection Planning via Efficient Near-Optimal Graph Search](https://arxiv.org/pdf/1907.00506.pdf).
 
@@ -64,28 +70,36 @@ This is code for paper [Toward Asymptotically-Optimal Inspection Planning via Ef
 	A simple way to solve this is to disable drone robot (which is done by the current cmake files), all you need to do is avoid setting both ```USE_CRISP``` and ```USE_PLANAR``` to 0.
 	If you still want to use the drone robot, please replace ```{OMPL_Source}/src/ompl/datastructures/NearestNeighborsGNAT.h``` with the one in external folder, rebuild and reinstall OMPL, finally change line 23 in root ```CMakeLists.txt``` to ```set(USE_C++17 1)```.
 
-2. Build a graph:
+2. Build a graph (roadmap):
 
 	```
 	cd {path to your local repository}/build
 	./app/build_graph seed num_vertex file_to_write 
 	```
 
+	When constructing the roadmap, we now allow rejection sampling to favor samples that increase inspection coverage. Set ```REJECT_SAMPLING``` (in ```include/global_common.h```) to 1 to enable this feature.
+
 2. Search a graph:
 
 	```
 	cd {path to your local repository}/build
-	./app/search_graph file_to_read initial_p initial_eps tightening_rate method file_to_write
+	./app/search_graph file_to_read initial_p initial_eps tightening_rate laziness_mode successor_mode batching_ratio file_to_write
 	```
 
-	Here, three different search methods are provided:
+	Here, four different laziness modes are provided:
 
-	0 -- no lazy computation
-    
-    1 -- lazy A*
-    
-    2 -- complete lazy
+	* 0 -- No lazy computation
+	* 1 -- Lazy SP (complete lazy)
+    * 2 -- Lazy A* modified (validate when subsuming for the first time, final method in the paper)
+    * 3 -- Lazy A* (validate only when popped from OPEN list, performance worse than 2, keep for reference)
 
+    There are also three successor modes provided:
+
+    * 0 -- direct neighboring successors on the roadmap (default, preferred)
+    * 1 -- First neighbor that increases inspection coverage (keep for reference)
+    * 2 -- first neighbor that increases inspection coverage and there's no other node increasing the coverage along the shortest path from its parent (keep for reference)
+
+    In ```include/global_common.h```, there are also additional macros to enable different features, namely ```USE_NODE_REUSE```, ```KEEP_SUBSUMING_HISTORY```, and ```SAVE_PREDECESSOR```. ```USE_NODE_REUSE``` enables reusing search efforts from previous search iteration. ```KEEP_SUBSUMING_HISTORY``` enables saving detailed information about subsumed node, which is essential for lazy edge validation and search effort reusing. ```SAVE_PREDECESSOR``` is an additional optimization for subusming history keeping, that saves memory footprint by saving the predecessor of the subsumed node instead of saving the subsumed node directly.
 
 ## Robot Background
 
