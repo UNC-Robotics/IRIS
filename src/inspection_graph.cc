@@ -78,6 +78,10 @@ void Inspection::Graph::UpdateGlobalVisibility(const VisibilitySet& set) {
 	global_vis_set_.Insert(set);
 }
 
+const VisibilitySet& Inspection::Graph::GlobalVisibility() const {
+    return global_vis_set_;
+}
+
 Idx Inspection::Graph::NumVertices() const {
 	return vertices_.size();
 }

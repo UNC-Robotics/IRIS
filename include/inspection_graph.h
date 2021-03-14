@@ -53,6 +53,7 @@ namespace Inspection {
 		void AddEdge(EPtr edge);
 		EPtr FindEdge(const Idx s, const Idx t) const;
 		void UpdateGlobalVisibility(const VisibilitySet& set);
+        const VisibilitySet& GlobalVisibility() const;
 
 		Idx NumVertices() const;
 		Idx NumEdges() const;
