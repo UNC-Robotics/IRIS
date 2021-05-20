@@ -1,14 +1,33 @@
 # IRIS (Incremental Random Inspection-roadmap Search)
 
-<!-- Linux / macOS [![Build Status](https://travis-ci.com/mengyu-fu/iris.svg?token=XPQsbGm4wg5EAgVzsSUR&branch=master)](https://travis-ci.com/mengyu-fu/iris) -->
+This is code for paper **Computationally-Efficient Roadmap-based Inspection Planning via Incremental Lazy Search**. To cite this work, please use:
 
-**Update:**
+```
+@misc{Fu2021_ICRA,
+      title={Computationally-Efficient Roadmap-based Inspection Planning via Incremental Lazy Search},
+      author={Mengyu Fu and Oren Salzman and Ron Alterovitz},
+      year={2021},
+      eprint={2103.13573},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO}
+}
+```
+Link to the paper: ICRA version (to be published), [arXiv version](https://arxiv.org/pdf/1907.00506.pdf).
 
-The code on this branch is updated to reflect the changes in *Computationally-Efficient Roadmap-based Inspection Planning via Incremental Lazy  Search (ICRA 2021)*.
-Please note the usage of ```search_graph``` is changed, read the following instructions for details.
+This work is built upon **Toward Asymptotically-Optimal Inspection Planning via Efficient Near-Optimal Graph Search**. To cite the original paper, please use:
 
-
-This is code for paper [Toward Asymptotically-Optimal Inspection Planning via Efficient Near-Optimal Graph Search](https://arxiv.org/pdf/1907.00506.pdf).
+```
+@INPROCEEDINGS{Fu2019_RSS,
+    AUTHOR    = {Mengyu Fu AND Alan Kuntz AND Oren Salzman AND Ron Alterovitz},
+    TITLE     = {Toward Asymptotically-Optimal Inspection Planning Via Efficient Near-Optimal Graph Search},
+    BOOKTITLE = {Proceedings of Robotics: Science and Systems},
+    YEAR      = {2019},
+    ADDRESS   = {FreiburgimBreisgau, Germany},
+    MONTH     = {June},
+    DOI       = {10.15607/RSS.2019.XV.057}
+}
+```
+Link to the paper: [RSS version](http://www.roboticsproceedings.org/rss15/p57.html), [arXiv version](https://arxiv.org/pdf/1907.00506.pdf).
 
 ### Requirements
 
