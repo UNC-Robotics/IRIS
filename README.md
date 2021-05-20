@@ -1,8 +1,21 @@
 # IRIS (Incremental Random Inspection-roadmap Search)
 
-Linux / macOS [![Build Status](https://travis-ci.com/mengyu-fu/iris.svg?token=XPQsbGm4wg5EAgVzsSUR&branch=master)](https://travis-ci.com/mengyu-fu/iris)
+This is code for paper **Toward Asymptotically-Optimal Inspection Planning via Efficient Near-Optimal Graph Search**.
 
-This is code for paper [Toward Asymptotically-Optimal Inspection Planning via Efficient Near-Optimal Graph Search](https://arxiv.org/pdf/1907.00506.pdf).
+To cite this work, please use:
+
+```
+@INPROCEEDINGS{Fu2019_RSS,
+    AUTHOR    = {Mengyu Fu AND Alan Kuntz AND Oren Salzman AND Ron Alterovitz},
+    TITLE     = {Toward Asymptotically-Optimal Inspection Planning Via Efficient Near-Optimal Graph Search},
+    BOOKTITLE = {Proceedings of Robotics: Science and Systems},
+    YEAR      = {2019},
+    ADDRESS   = {FreiburgimBreisgau, Germany},
+    MONTH     = {June},
+    DOI       = {10.15607/RSS.2019.XV.057}
+}
+```
+Link to the paper: [RSS version](http://www.roboticsproceedings.org/rss15/p57.html), [arXiv version](https://arxiv.org/pdf/1907.00506.pdf).
 
 ### Requirements
 
