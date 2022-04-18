@@ -20,6 +20,10 @@ Inspection planning, the task of planning motions that allow a robot to inspect 
 * [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page) - v3.3.4
 * [OMPL](https://ompl.kavrakilab.org/) - the Open Motion Planning Library v1.5.0
 
+## License
+
+Unless otherwise specified in the file, BSD 3-Clause License applies.
+
 ## Installation
 
 1. First clone code to your local repository:
