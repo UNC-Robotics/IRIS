@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
 
     // Environment setup.
     auto env = std::make_shared<planar::PlanarEnvironment>(2.0, 2.0, 100, seed);
-    env->RandomObstacles(num_obstacles, 0.3, 0.1, origin);
+    env->RandomObstacles(num_obstacles, 0.3);
 
     // Planner.
     auto planner = std::make_shared<planar::PlanarPlanner>(robot, env, seed);
